@@ -11,8 +11,8 @@ import { subscribeToEvent, unsubscribeFromEvent } from '../../utils/events';
 import { useModal } from '../common/useModal';
 import FileSaver from 'file-saver';
 
-// export const baseLocalHost = window.location.host
-export const baseLocalHost = '127.0.0.1:12391'
+export const baseLocalHost = window.location.host
+// export const baseLocalHost = '127.0.0.1:12391'
 
 interface RowData {
   amountQORT: number;
@@ -54,8 +54,10 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
     return offers.filter((item)=> !listOfOngoingTradesAts.includes(item.qortalAtAddress))
   }, [listOfOngoingTradesAts, offers])
   const initiatedFetchPresence = useRef(false)
- 
-  
+  const initiatedFetchPresenceSocket = useRef(false)
+
+  const socketRef = useRef(null)
+  const socketPresenceRef = useRef(null)
   const [selectedOffer, setSelectedOffer] = useState<any>(null)
   const [selectedOffers, setSelectedOffers] = useState<any>([])
   const [record, setRecord] = useState(null)
@@ -270,29 +272,33 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
     }
     
    
-    const socket = new WebSocket(socketLink)
-    socket.onopen = () => {
+    socketPresenceRef.current = new WebSocket(socketLink)
+    socketPresenceRef.current.onopen = () => {
       setTimeout(pingSocket, 50)
     }
-    socket.onmessage = (e) => {
-      tradePresenceTxns.current = JSON.parse(e.data)
+    socketPresenceRef.current.onmessage = (e) => {
+      tradePresenceTxns.current = !initiatedFetchPresenceSocket.current ? JSON.parse(e.data) : [...tradePresenceTxns.current, ...JSON.parse(e.data)]
+      initiatedFetchPresenceSocket.current = true
       processOffersWithPresence()
       restarted = false
     }
-    socket.onclose = () => {
+    socketPresenceRef.current.onclose = (event) => {
       clearTimeout(socketTimeout)
+      if (event.reason === 'forced') {
+        return
+      }
       restartTradePresenceWebSocket()
     }
-    socket.onerror = (e) => {
+    socketPresenceRef.current.onerror = (e) => {
       clearTimeout(socketTimeout)
       restartTradePresenceWebSocket()
     }
     const pingSocket = () => {
-      socket.send('ping')
+      socketPresenceRef.current.send('ping')
       socketTimeout = setTimeout(pingSocket, 295000)
     }
   }
-  const socketRef = useRef(null)
+
 
   const restartTradeOffers = ()=> {
     if (socketRef.current) {
@@ -302,6 +308,13 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
     offeringTrades.current = []
     setOffers([])
     setSelectedOffer(null)
+  }
+
+  const restartPresence = ()=> {
+    if (socketPresenceRef.current) {
+      socketPresenceRef.current.close(1000, 'forced'); // Close with a custom reason
+      socketPresenceRef.current = null
+    }
   }
 
   const initTradeOffersWebSocket = (restarted = false) => {
@@ -352,6 +365,10 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
     }
     getNewBlockedTrades()
     const intervalBlockTrades = setInterval(() => {
+      
+      initiatedFetchPresenceSocket.current = false
+      restartPresence()
+      initTradePresenceWebSocket()
       getNewBlockedTrades()
     }, 150000)
 

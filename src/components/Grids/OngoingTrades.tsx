@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef, RowClassParams, RowStyle, SizeColumnsToContentStrategy } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -13,7 +13,9 @@ export const OngoingTrades = () => {
     const { onGoingTrades, getCoinLabel, selectedCoin } = useContext(gameContext);
     const gridRef = useRef<any>(null)
 
-   
+    const filteredOngoingTrades = useMemo(()=> {
+        return onGoingTrades?.filter((item)=> item?.tradeInfo?.foreignBlockchain === selectedCoin)
+      }, [onGoingTrades, selectedCoin])
   
     const onGridReady = useCallback((params: any) => {
         // params.api.sizeColumnsToFit(); // Adjust columns to fit the grid width
@@ -80,14 +82,14 @@ export const OngoingTrades = () => {
  
 
     return (
-        <div className="ag-theme-alpine-dark" style={{ height: 225, width: '100%' }}>
+        <div className="ag-theme-alpine-dark" style={{ height: 225, width: '100%', display: filteredOngoingTrades?.length === 0 && 'none' }}>
             <AgGridReact
                     onGridReady={onGridReady}
                     ref={gridRef}
 
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}
-                rowData={onGoingTrades?.filter((item)=> item?.tradeInfo?.foreignBlockchain === selectedCoin)}
+                rowData={filteredOngoingTrades}
                 // onRowClicked={onRowClicked}
                 rowSelection="single"
                 getRowId={getRowId}

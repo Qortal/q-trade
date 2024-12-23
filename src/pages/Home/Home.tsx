@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect, useState } from "react";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { AppContainer } from "../../App-styles";
 
 import axios from "axios";
@@ -30,10 +30,14 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
     setIsAuthenticated,
     OAuthLoading,
     setOAuthLoading,
+    onGoingTrades,
+    selectedCoin
   } = useContext(gameContext);
   const { setNotification } = useContext(NotificationContext);
   const [mode, setMode] = useState("buy");
-
+  const filteredOngoingTrades = useMemo(()=> {
+    return onGoingTrades?.filter((item)=> item?.tradeInfo?.foreignBlockchain === selectedCoin)
+  }, [onGoingTrades, selectedCoin])
   const checkIfAuthenticated = async () => {
     try {
       setOAuthLoading(true);
@@ -76,7 +80,7 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
               fontSize: "16px",
             }}
           >
-            My Pending Orders
+            {`My Pending Orders: ${filteredOngoingTrades?.length}`}
           </TextTableTitle>
         </Box>
         <Spacer height="10px" />
