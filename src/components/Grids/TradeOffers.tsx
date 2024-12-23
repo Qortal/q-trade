@@ -109,41 +109,43 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
     }
   }
 
-  const columnDefs: ColDef[] = [
-    { 
-      headerCheckboxSelection: true, // Adds a checkbox in the header for selecting all rows
-      checkboxSelection: true, // Adds checkboxes in each row for selection
-      headerName: "Select", // You can customize the header name
-      width: 50, // Adjust the width as needed
-      pinned: 'left', // Optional, to pin this column on the left
-      resizable: false,
-    },
-    { headerName: "QORT AMOUNT", field: "qortAmount" , flex: 1, // Flex makes this column responsive
-    minWidth: 150, // Ensure it doesn't shrink too much
-    resizable: true },
-    { headerName: `${getCoinLabel()}/QORT`, valueGetter: (params) => +params.data.foreignAmount / +params.data.qortAmount, sortable: true, sort: 'asc', flex: 1, // Flex makes this column responsive
-    minWidth: 150, // Ensure it doesn't shrink too much
-    resizable: true  },
-    { headerName: `Total ${getCoinLabel()} Value`, field: "foreignAmount", flex: 1, // Flex makes this column responsive
-    minWidth: 150, // Ensure it doesn't shrink too much
-    resizable: true },
-    { headerName: "Seller", field: "qortalCreator", flex: 1, // Flex makes this column responsive
-    minWidth: 300, // Ensure it doesn't shrink too much
-    resizable: true, valueGetter: (params)=> {
-      if(params?.data?.qortalCreator){
-        if(qortalNames[params?.data?.qortalCreator]){
-          return qortalNames[params?.data?.qortalCreator] 
-        } else if(qortalNames[params?.data?.qortalCreator] === undefined){
-          getName(params?.data?.qortalCreator)
-
-          return params?.data?.qortalCreator
-        } else {
-          return params?.data?.qortalCreator
-
+  const columnDefs: ColDef[] = useMemo(()=> {
+    return [
+      { 
+        headerCheckboxSelection: true, // Adds a checkbox in the header for selecting all rows
+        checkboxSelection: true, // Adds checkboxes in each row for selection
+        headerName: "", // You can customize the header name
+        width: 50, // Adjust the width as needed
+        pinned: 'left', // Optional, to pin this column on the left
+        resizable: false,
+      },
+      { headerName: "QORT AMOUNT", field: "qortAmount" , flex: 1, // Flex makes this column responsive
+      minWidth: 150, // Ensure it doesn't shrink too much
+      resizable: true },
+      { headerName: `${getCoinLabel()}/QORT`, valueGetter: (params) => +params.data.foreignAmount / +params.data.qortAmount, sortable: true, sort: 'asc', flex: 1, // Flex makes this column responsive
+      minWidth: 150, // Ensure it doesn't shrink too much
+      resizable: true  },
+      { headerName: `Total ${getCoinLabel()} Value`, field: "foreignAmount", flex: 1, // Flex makes this column responsive
+      minWidth: 150, // Ensure it doesn't shrink too much
+      resizable: true },
+      { headerName: "Seller", field: "qortalCreator", flex: 1, // Flex makes this column responsive
+      minWidth: 300, // Ensure it doesn't shrink too much
+      resizable: true, valueGetter: (params)=> {
+        if(params?.data?.qortalCreator){
+          if(qortalNames[params?.data?.qortalCreator]){
+            return qortalNames[params?.data?.qortalCreator] 
+          } else if(qortalNames[params?.data?.qortalCreator] === undefined){
+            getName(params?.data?.qortalCreator)
+  
+            return params?.data?.qortalCreator
+          } else {
+            return params?.data?.qortalCreator
+  
+          }
         }
-      }
-    } },
-  ];
+      } },
+    ];
+  },[qortalNames])
 
  
 

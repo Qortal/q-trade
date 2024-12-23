@@ -345,7 +345,7 @@ export const Header = ({
                 }}
               >
                 <img
-                  src={getCoinIcon(getCoinLabel(selectedCoin))}
+                  src={getCoinIcon(getCoinLabel())}
                   style={{
                     height: "25px",
                     width: "auto",
