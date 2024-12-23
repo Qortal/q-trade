@@ -54,13 +54,16 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
   }, [userInfo?.address]);
 
   return (
-    <AppContainer>
-      <Header
+    <>
+     <Header
         qortBalance={qortBalance}
         foreignCoinBalance={foreignCoinBalance}
         mode={mode}
         setMode={setMode}
       />
+
+    <AppContainer>
+     
 
       <div
         style={{
@@ -106,5 +109,6 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
 
       <CreateSell show={mode === "sell"} qortAddress={userInfo?.address} />
     </AppContainer>
+    </>
   );
 };

@@ -75,6 +75,7 @@ function App() {
   const [selectedCoin, setSelectedCoin] = useState("LITECOIN");
 
   const foreignCoinBalance = useMemo(()=> {
+    if(balances[selectedCoin] === 0) return 0
     return balances[selectedCoin] || null
   }, [balances, selectedCoin])
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

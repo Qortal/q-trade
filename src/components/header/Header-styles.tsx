@@ -110,7 +110,7 @@ export const GameSelectDropdownMenuItem = styled(Box)(({ theme }) => ({
 
 export const Username = styled(Typography)(({ theme }) => ({
   fontFamily: "Fira Sans, sans-serif",
-  fontSize: "16px",
+  fontSize: "20px",
   lineHeight: "19.2px",
   fontWeight: 400,
   color: theme.palette.text.primary,

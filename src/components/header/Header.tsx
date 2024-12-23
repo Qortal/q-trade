@@ -20,12 +20,16 @@ import gameContext from "../../contexts/gameContext";
 import { UserContext } from "../../contexts/userContext";
 import { cropAddress } from "../../utils/cropAddress";
 import { BubbleCardColored1 } from "../../pages/Home/Home-Styles";
-import qtradeLogo from '../../components/common/icons/qtradeLogo.png'
+import qtradeLogo from "../../components/common/icons/qtradeLogo.png";
+import qortIcon from "../../assets/img/qort.png";
 import {
   Alert,
+  AppBar,
   Avatar,
   Box,
   Button,
+  Card,
+  CardContent,
   FormControlLabel,
   MenuItem,
   Select,
@@ -36,12 +40,13 @@ import {
 } from "@mui/material";
 import { sendRequestToExtension } from "../../App";
 import { Terms } from "../Terms";
-import ltcIcon from '../../assets/img/ltc.png'
-import btcIcon from '../../assets/img/btc.png'
-import dogeIcon from '../../assets/img/doge.png'
-import rvnIcon from '../../assets/img/rvn.png'
-import dgbIcon from '../../assets/img/dgb.png'
-import arrrIcon from '../../assets/img/arrr.png'
+import ltcIcon from "../../assets/img/ltc.png";
+import btcIcon from "../../assets/img/btc.png";
+import dogeIcon from "../../assets/img/doge.png";
+import rvnIcon from "../../assets/img/rvn.png";
+import dgbIcon from "../../assets/img/dgb.png";
+import arrrIcon from "../../assets/img/arrr.png";
+import { Spacer } from "../common/Spacer";
 
 const checkIfLocal = async () => {
   try {
@@ -65,47 +70,67 @@ export const Label = styled("label")(
   `
 );
 
-const SelectRow = ({coin})=> {
-  let img
+const getCoinIcon = (coin)=> {
+  let img;
+
   switch (coin) {
-    case 'LTC':
-     img = ltcIcon
+    case "LTC":
+      img = ltcIcon;
       break;
-    case 'BTC':
-      img = btcIcon
+    case "BTC":
+      img = btcIcon;
       break;
 
-    case 'DOGE':
-      img = dogeIcon
+    case "DOGE":
+      img = dogeIcon;
       break;
-    case 'RVN':
-      img = rvnIcon
+    case "RVN":
+      img = rvnIcon;
       break;
-  
-    case 'ARRR':
-      img = arrrIcon
+
+    case "ARRR":
+      img = arrrIcon;
       break;
-    case 'DGB':
-      img = dgbIcon
+    case "DGB":
+      img = dgbIcon;
       break;
     default:
-      null
+      null;
   }
-
-   return (
-   <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        height: '25px'
-      }}><img style={{
-        height: '20px',
-        width: 'auto'
-      }} src={img} /><p>{coin}</p></div>
-   )
+  return img
 }
 
-export const Header = ({ qortBalance, foreignCoinBalance, mode, setMode }: any) => {
+const SelectRow = ({ coin }) => {
+  let img = getCoinIcon(coin)
+ 
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        height: "25px",
+      }}
+    >
+      <img
+        style={{
+          height: "20px",
+          width: "auto",
+        }}
+        src={img}
+      />
+      <p>{coin}</p>
+    </div>
+  );
+};
+
+export const Header = ({
+  qortBalance,
+  foreignCoinBalance,
+  mode,
+  setMode,
+}: any) => {
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -122,7 +147,8 @@ export const Header = ({ qortBalance, foreignCoinBalance, mode, setMode }: any) 
       message: "Change the node you are using at the authentication page",
     });
   };
-  const { userInfo, selectedCoin, setSelectedCoin, getCoinLabel } = useContext(gameContext);
+  const { userInfo, selectedCoin, setSelectedCoin, getCoinLabel } =
+    useContext(gameContext);
   const { avatar, setAvatar } = useContext(UserContext);
 
   const LocalNodeSwitch = styled(Switch)(({ theme }) => ({
@@ -197,137 +223,235 @@ export const Header = ({ qortBalance, foreignCoinBalance, mode, setMode }: any) 
   // }, [userInfo]);
 
   return (
-    <HeaderNav
-      sx={{
-        flexDirection: "column",
-        gap: "10px",
-      }}
-    >
-      <Box
+    <>
+      <AppBar
+        position="sticky"
         sx={{
-          display: "flex",
-          gap: "20px",
-          alignItems: "center",
+          background: "rgba(39, 40, 44, 1)",
         }}
       >
-        <LogoColumn>
-          <img
-            src={qtradeLogo}
-            style={{
-              height: "40px",
-            }}
-          />
-        </LogoColumn>
         <Box
           sx={{
             display: "flex",
-            flexDirection: "column",
-            gap: "5px",
+            gap: "20px",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            padding: "10px",
           }}
         >
-          <Select
-          size="small"
-            value={selectedCoin}
-            onChange={(e) => setSelectedCoin(e.target.value)}
-          >
-            <MenuItem value={"LITECOIN"}><SelectRow coin="LTC" /></MenuItem>
-            <MenuItem value={"DOGECOIN"}><SelectRow coin="DOGE" /></MenuItem>
-            <MenuItem value={"BITCOIN"}><SelectRow coin="BTC" /></MenuItem>
-            <MenuItem value={"DIGIBYTE"}><SelectRow coin="DGB" /></MenuItem>
-            <MenuItem value={"RAVENCOIN"}><SelectRow coin="RVN" /></MenuItem>
-            <MenuItem value={"PIRATECHAIN"}><SelectRow coin="ARRR" /></MenuItem>
-          </Select>
-        </Box>
-      </Box>
-
-      <RightColumn sx={{
-        alignItems: 'center'
-      }}>
-        <HeaderText>
-          Balance: {qortBalance} QORT |{" "}
-          {foreignCoinBalance === null ? "N/A" : foreignCoinBalance} {getCoinLabel()}
-        </HeaderText>
-        <NameRow>
-          {userInfo?.name ? (
-            <Username>{userInfo?.name}</Username>
-          ) : userInfo?.address ? (
-            <Username>{cropAddress(userInfo?.address)}</Username>
-          ) : null}
-
-          {userInfo?.name ? (
-            <Avatar
-              sx={{
-                height: "24px",
-                width: "24px",
-                fontSize: "15px",
-              }}
-              src={`/arbitrary/THUMBNAIL/${userInfo?.name}/qortal_avatar?encoding=base64&rebuild=false`}
-              alt={`${userInfo?.name}`}
-            >
-              {userInfo?.name?.charAt(0)?.toUpperCase()}
-            </Avatar>
-          ) : userInfo?.address ? (
-            <BubbleCardColored1 style={{ height: "35px", width: "35px" }} />
-          ) : (
-            <QortalLogoIcon
-              height="35"
-              width="35"
-              color="none"
-              onClickFunc={() => {
-                window.open("https://www.qortal.dev", "_blank")?.focus();
+          <LogoColumn>
+            <img
+              src={qtradeLogo}
+              style={{
+                height: "40px",
               }}
             />
-          )}
-        </NameRow>
-      </RightColumn>
-      <FormControlLabel
+          </LogoColumn>
+          <FormControlLabel
+            sx={{
+              color: "white",
+            }}
+            control={
+              <LocalNodeSwitch
+                checked={isUsingGateway}
+                onChange={handleChange}
+              />
+            }
+            label="Is using Gateway"
+          />
+        </Box>
+      </AppBar>
+      <HeaderNav
         sx={{
-          color: "white",
-        }}
-        control={
-          <LocalNodeSwitch checked={isUsingGateway} onChange={handleChange} />
-        }
-        label="Is using Gateway"
-      />
-      <Terms />
-      <Box
-        sx={{
-          display: "flex",
-          gap: "20px",
-          alignItems: "center",
+          flexDirection: "column",
+          gap: "10px",
         }}
       >
-        <Button sx={{
-          opacity: 0.8,
-          "&:hover": {
-            background: mode === 'buy' ?  "#0085ff" : 'unset',
-            opacity: 1,
-          },
-        }} variant={mode === 'buy' ? 'contained' : 'text'} onClick={() => setMode("buy")}>Buy QORT</Button>
-        <Button sx={{
-          opacity: 0.8,
-          "&:hover": {
-            background: mode === 'sell' ?  "#0085ff" : 'unset',
-            opacity: 1,
-          },
-        }} variant={mode === 'sell' ? 'contained' : 'text'} onClick={() => setMode("sell")}>SELL QORT</Button>
-      </Box>
-
-      <Snackbar
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        open={open}
-        autoHideDuration={6000}
-        onClose={handleClose}
-      >
-        <Alert
-          onClose={handleClose}
-          severity={info?.type}
-          variant="filled"
-          sx={{ width: "100%" }}
+        <Spacer height="10px" />
+        <Box
+          sx={{
+            display: "flex",
+            gap: "20px",
+            alignItems: "center",
+            width: "100%",
+            justifyContent: "space-between",
+          }}
         >
-          {info?.message}
-        </Alert>
-      </Snackbar>
-    </HeaderNav>
+          <NameRow>
+            {userInfo?.name ? (
+              <Avatar
+                sx={{
+                  height: "30px",
+                  width: "30px",
+                  fontSize: "16px",
+                }}
+                src={`/arbitrary/THUMBNAIL/${userInfo?.name}/qortal_avatar?async=true`}
+                alt={`${userInfo?.name}`}
+              >
+                {userInfo?.name?.charAt(0)?.toUpperCase()}
+              </Avatar>
+            ) : userInfo?.address ? (
+              <BubbleCardColored1 style={{ height: "35px", width: "35px" }} />
+            ) : null}
+            {userInfo?.name ? (
+              <Username>{userInfo?.name}</Username>
+            ) : userInfo?.address ? (
+              <Username>{cropAddress(userInfo?.address)}</Username>
+            ) : null}
+          </NameRow>
+          <Terms />
+        </Box>
+
+        <RightColumn
+          sx={{
+            alignItems: "center",
+          }}
+        >
+          <Card
+            variant="outlined"
+            sx={{
+              backgroundColor: "#292929",
+              "&.MuiCard-root": {
+                cursor: "default",
+              },
+            }}
+          >
+            <CardContent>
+              <HeaderText>Total Balance</HeaderText>
+              <Spacer height="10px" />
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: "20px",
+                  alignItems: "center",
+                }}
+              >
+                <img
+                  src={qortIcon}
+                  style={{
+                    height: "25px",
+                    width: "auto",
+                  }}
+                />
+                <HeaderText>{qortBalance} QORT</HeaderText>
+              </Box>
+              <Spacer height="10px" />
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: "20px",
+                  alignItems: "center",
+                }}
+              >
+                <img
+                  src={getCoinIcon(getCoinLabel(selectedCoin))}
+                  style={{
+                    height: "25px",
+                    width: "auto",
+                  }}
+                />
+                 {foreignCoinBalance === null ? "N/A" : foreignCoinBalance}{" "}
+                {getCoinLabel()}
+              </Box>
+            
+            </CardContent>
+          </Card>
+        </RightColumn>
+
+        <Box
+          sx={{
+            display: "flex",
+            gap: "20px",
+            alignItems: "center",
+            width: "100%",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "5px",
+            }}
+          >
+            <Select
+              size="small"
+              value={selectedCoin}
+              onChange={(e) => setSelectedCoin(e.target.value)}
+            >
+              <MenuItem value={"LITECOIN"}>
+                <SelectRow coin="LTC" />
+              </MenuItem>
+              <MenuItem value={"DOGECOIN"}>
+                <SelectRow coin="DOGE" />
+              </MenuItem>
+              <MenuItem value={"BITCOIN"}>
+                <SelectRow coin="BTC" />
+              </MenuItem>
+              <MenuItem value={"DIGIBYTE"}>
+                <SelectRow coin="DGB" />
+              </MenuItem>
+              <MenuItem value={"RAVENCOIN"}>
+                <SelectRow coin="RVN" />
+              </MenuItem>
+              <MenuItem value={"PIRATECHAIN"}>
+                <SelectRow coin="ARRR" />
+              </MenuItem>
+            </Select>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              gap: "20px",
+              alignItems: "center",
+            }}
+          >
+            <Button
+              sx={{
+                opacity: 0.8,
+                "&:hover": {
+                  background: mode === "buy" ? "#0085ff" : "unset",
+                  opacity: 1,
+                },
+              }}
+              variant={mode === "buy" ? "contained" : "text"}
+              onClick={() => setMode("buy")}
+            >
+              Buy QORT
+            </Button>
+            <Button
+              sx={{
+                opacity: 0.8,
+                "&:hover": {
+                  background: mode === "sell" ? "#0085ff" : "unset",
+                  opacity: 1,
+                },
+              }}
+              variant={mode === "sell" ? "contained" : "text"}
+              onClick={() => setMode("sell")}
+            >
+              SELL QORT
+            </Button>
+          </Box>
+        </Box>
+
+        <Snackbar
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          open={open}
+          autoHideDuration={6000}
+          onClose={handleClose}
+        >
+          <Alert
+            onClose={handleClose}
+            severity={info?.type}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {info?.message}
+          </Alert>
+        </Snackbar>
+      </HeaderNav>
+    </>
   );
 };
