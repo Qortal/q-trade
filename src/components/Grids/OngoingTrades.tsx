@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, SizeColumnsToContentStrategy } from 'ag-grid-community';
+import { ColDef, RowClassParams, RowStyle, SizeColumnsToContentStrategy } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import gameContext from '../../contexts/gameContext';
@@ -10,9 +10,17 @@ const autoSizeStrategy: SizeColumnsToContentStrategy = {
 };
 
 export const OngoingTrades = () => {
-    const { onGoingTrades } = useContext(gameContext);
+    const { onGoingTrades, getCoinLabel, selectedCoin } = useContext(gameContext);
+    const gridRef = useRef<any>(null)
 
-
+   
+  
+    const onGridReady = useCallback((params: any) => {
+        // params.api.sizeColumnsToFit(); // Adjust columns to fit the grid width
+        // const allColumnIds = params.columnApi.getAllColumns().map((col: any) => col.getColId());
+        // params.columnApi.autoSizeColumns(allColumnIds); // Automatically adjust the width to fit content
+      }, []);
+     
     const defaultColDef = {
         resizable: true, // Make columns resizable by default
         sortable: true, // Make columns sortable by default
@@ -35,9 +43,10 @@ export const OngoingTrades = () => {
             resizable: true ,
             flex: 1, minWidth: 100
         },
-        { headerName: "Amount (QORT)", valueGetter: (params) => +params.data.tradeInfo.qortAmount, resizable: true, flex: 1, minWidth: 100  },
-        { headerName: "LTC/QORT", valueGetter: (params) => +params.data.tradeInfo.expectedForeignAmount / +params.data.tradeInfo.qortAmount , resizable: true , flex: 1, minWidth: 100},
-        { headerName: "Total LTC Value", valueGetter: (params) => +params.data.tradeInfo.expectedForeignAmount, resizable: true , flex: 1, minWidth: 100 },
+        { headerName: "Amount (QORT)", valueGetter: (params) => +params.data.tradeInfo.qortAmount, resizable: true, flex: 1, minWidth: 150  },
+        { headerName: `${getCoinLabel()}/QORT`, valueGetter: (params) => +params.data.tradeInfo.expectedForeignAmount / +params.data.tradeInfo.qortAmount , resizable: true , flex: 1, minWidth: 150},
+        { headerName: `Total ${getCoinLabel()} Value`, valueGetter: (params) => +params.data.tradeInfo.expectedForeignAmount, resizable: true , flex: 1, minWidth: 150, 
+    },
         {
             headerName: "Notes",  valueGetter: (params) => {
                 if (params.data.tradeInfo.mode === 'TRADING') {
@@ -54,7 +63,7 @@ export const OngoingTrades = () => {
                   }
                   
                 if (params.data.message) return params.data.message
-            }, resizable: true, flex: 1, minWidth: 100
+            }, resizable: true, flex: 1, minWidth:300,     autoHeight: true,    cellStyle: { whiteSpace: 'normal', wordBreak: 'break-word', padding: '5px' },
         }
     ];
 
@@ -65,15 +74,20 @@ export const OngoingTrades = () => {
     //     return null;
     //   };
     const getRowId = useCallback(function (params: any) {
-        return String(params.data._id);
+        return String(params.data?.qortalAtAddress);
     }, []);
+
+ 
 
     return (
         <div className="ag-theme-alpine-dark" style={{ height: 225, width: '100%' }}>
             <AgGridReact
+                    onGridReady={onGridReady}
+                    ref={gridRef}
+
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}
-                rowData={onGoingTrades}
+                rowData={onGoingTrades?.filter((item)=> item?.tradeInfo?.foreignBlockchain === selectedCoin)}
                 // onRowClicked={onRowClicked}
                 rowSelection="single"
                 getRowId={getRowId}
@@ -85,7 +99,7 @@ export const OngoingTrades = () => {
         // domLayout='autoHeight'
 
             // getRowStyle={getRowStyle}
-
+            
             />
         </div>
     );

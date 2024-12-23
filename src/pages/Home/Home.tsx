@@ -24,7 +24,7 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
   const navigate = useNavigate();
   const {
     qortBalance,
-    ltcBalance,
+    foreignCoinBalance,
     userInfo,
     isAuthenticated,
     setIsAuthenticated,
@@ -53,7 +53,7 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
     <AppContainer>
       <Header
         qortBalance={qortBalance}
-        ltcBalance={ltcBalance}
+        foreignCoinBalance={foreignCoinBalance}
         mode={mode}
         setMode={setMode}
       />
@@ -97,7 +97,7 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
           </TextTableTitle>
         </Box>
         <Spacer height="10px" />
-        <TradeOffers ltcBalance={ltcBalance} />
+        <TradeOffers foreignCoinBalance={foreignCoinBalance} />
       </div>
 
       <CreateSell show={mode === "sell"} qortAddress={userInfo?.address} />

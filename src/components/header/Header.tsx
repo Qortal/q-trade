@@ -36,6 +36,12 @@ import {
 } from "@mui/material";
 import { sendRequestToExtension } from "../../App";
 import { Terms } from "../Terms";
+import ltcIcon from '../../assets/img/ltc.png'
+import btcIcon from '../../assets/img/btc.png'
+import dogeIcon from '../../assets/img/doge.png'
+import rvnIcon from '../../assets/img/rvn.png'
+import dgbIcon from '../../assets/img/dgb.png'
+import arrrIcon from '../../assets/img/arrr.png'
 
 const checkIfLocal = async () => {
   try {
@@ -59,7 +65,47 @@ export const Label = styled("label")(
   `
 );
 
-export const Header = ({ qortBalance, ltcBalance, mode, setMode }: any) => {
+const SelectRow = ({coin})=> {
+  let img
+  switch (coin) {
+    case 'LTC':
+     img = ltcIcon
+      break;
+    case 'BTC':
+      img = btcIcon
+      break;
+
+    case 'DOGE':
+      img = dogeIcon
+      break;
+    case 'RVN':
+      img = rvnIcon
+      break;
+  
+    case 'ARRR':
+      img = arrrIcon
+      break;
+    case 'DGB':
+      img = dgbIcon
+      break;
+    default:
+      null
+  }
+
+   return (
+   <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        height: '25px'
+      }}><img style={{
+        height: '20px',
+        width: 'auto'
+      }} src={img} /><p>{coin}</p></div>
+   )
+}
+
+export const Header = ({ qortBalance, foreignCoinBalance, mode, setMode }: any) => {
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -67,7 +113,6 @@ export const Header = ({ qortBalance, ltcBalance, mode, setMode }: any) => {
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<any>(null);
   const { isUsingGateway } = useContext(gameContext);
-  const [selectedCoin, setSelectedCoin] = useState("LITECOIN");
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setChecked(false);
@@ -77,7 +122,7 @@ export const Header = ({ qortBalance, ltcBalance, mode, setMode }: any) => {
       message: "Change the node you are using at the authentication page",
     });
   };
-  const { userInfo } = useContext(gameContext);
+  const { userInfo, selectedCoin, setSelectedCoin, getCoinLabel } = useContext(gameContext);
   const { avatar, setAvatar } = useContext(UserContext);
 
   const LocalNodeSwitch = styled(Switch)(({ theme }) => ({
@@ -185,7 +230,12 @@ export const Header = ({ qortBalance, ltcBalance, mode, setMode }: any) => {
             value={selectedCoin}
             onChange={(e) => setSelectedCoin(e.target.value)}
           >
-            <MenuItem value={"LITECOIN"}>LTC</MenuItem>
+            <MenuItem value={"LITECOIN"}><SelectRow coin="LTC" /></MenuItem>
+            <MenuItem value={"DOGECOIN"}><SelectRow coin="DOGE" /></MenuItem>
+            <MenuItem value={"BITCOIN"}><SelectRow coin="BTC" /></MenuItem>
+            <MenuItem value={"DIGIBYTE"}><SelectRow coin="DGB" /></MenuItem>
+            <MenuItem value={"RAVENCOIN"}><SelectRow coin="RVN" /></MenuItem>
+            <MenuItem value={"PIRATECHAIN"}><SelectRow coin="ARRR" /></MenuItem>
           </Select>
         </Box>
       </Box>
@@ -195,7 +245,7 @@ export const Header = ({ qortBalance, ltcBalance, mode, setMode }: any) => {
       }}>
         <HeaderText>
           Balance: {qortBalance} QORT |{" "}
-          {ltcBalance === null ? "N/A" : ltcBalance} LTC
+          {foreignCoinBalance === null ? "N/A" : foreignCoinBalance} {getCoinLabel()}
         </HeaderText>
         <NameRow>
           {userInfo?.name ? (
@@ -247,8 +297,20 @@ export const Header = ({ qortBalance, ltcBalance, mode, setMode }: any) => {
           alignItems: "center",
         }}
       >
-        <Button onClick={() => setMode("buy")}>Buy QORT</Button>
-        <Button onClick={() => setMode("sell")}>SELL QORT</Button>
+        <Button sx={{
+          opacity: 0.8,
+          "&:hover": {
+            background: mode === 'buy' ?  "#0085ff" : 'unset',
+            opacity: 1,
+          },
+        }} variant={mode === 'buy' ? 'contained' : 'text'} onClick={() => setMode("buy")}>Buy QORT</Button>
+        <Button sx={{
+          opacity: 0.8,
+          "&:hover": {
+            background: mode === 'sell' ?  "#0085ff" : 'unset',
+            opacity: 1,
+          },
+        }} variant={mode === 'sell' ? 'contained' : 'text'} onClick={() => setMode("sell")}>SELL QORT</Button>
       </Box>
 
       <Snackbar

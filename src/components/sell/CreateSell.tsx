@@ -19,7 +19,27 @@ export const minimumAmountSellTrades = {
   'LITECOIN': {
     value: 0.01,
     ticker: 'LTC'
-  }
+  },
+  DOGECOIN: {
+    value: 1,
+    ticker: "DOGE",
+  },
+  BITCOIN: {
+    value: 0.001,
+    ticker: "BTC",
+  },
+  DIGIBYTE: {
+    value: 0.01,
+    ticker: "DGB",
+  },
+  RAVENCOIN: {
+    value: 0.01,
+    ticker: "RVN",
+  },
+  PIRATECHAIN: {
+    value: 0.0002,
+    ticker: "ARRR",
+  },
 }
 
 export const CustomInput = styled(TextField)({
@@ -66,7 +86,7 @@ export const CreateSell = ({qortAddress, show}) => {
     const [open, setOpen] = React.useState(false);
     const [qortAmount, setQortAmount] = React.useState(0)
     const [foreignAmount, setForeignAmount] = React.useState(0)
-    const {updateTemporaryFailedTradeBots, sellOrders, fetchTemporarySellOrders, isUsingGateway} = useContext(gameContext)
+    const {updateTemporaryFailedTradeBots, sellOrders, fetchTemporarySellOrders, isUsingGateway, getCoinLabel, selectedCoin} = useContext(gameContext)
     const [openAlert, setOpenAlert] = React.useState(false)
   const [info, setInfo] = React.useState<any>(null)
     const handleClickOpen = () => {
@@ -80,7 +100,6 @@ export const CreateSell = ({qortAddress, show}) => {
 
     const createSellOrder = async() => {
         try {
-          setOpen(true)
           setInfo({
             type: 'info',
             message: "Attempting to create sell order. Please wait..."
@@ -88,8 +107,8 @@ export const CreateSell = ({qortAddress, show}) => {
            const res = await qortalRequestWithTimeout({
                 action: "CREATE_TRADE_SELL_ORDER",
                 qortAmount,
-                foreignBlockchain: 'LITECOIN',
-                foreignAmount
+                foreignBlockchain: selectedCoin,
+                foreignAmount: qortAmount * foreignAmount
               }, 900000);
              
             if(res?.error && res?.failedTradeBot){
@@ -167,7 +186,6 @@ export const CreateSell = ({qortAddress, show}) => {
           </div>
       )
     }
-  
   return (
     <div style={{
       width: '100%',
@@ -187,7 +205,7 @@ export const CreateSell = ({qortAddress, show}) => {
         }}
       >
         <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
-          New Sell Order - QORT for LTC
+          {`New Sell Order - QORT for ${getCoinLabel()}`}
         </DialogTitle>
         <IconButton
           aria-label="close"
@@ -214,7 +232,7 @@ export const CreateSell = ({qortAddress, show}) => {
             />
             <Spacer height="6px" />
             <CustomLabel htmlFor="standard-adornment-amount">
-              Price Each (LTC)
+              {`Price Each (${getCoinLabel()})`}
             </CustomLabel>
             <Spacer height="5px" />
             <CustomInput
@@ -225,10 +243,10 @@ export const CreateSell = ({qortAddress, show}) => {
               autoComplete="off"
             />
             <Spacer height="6px" />
-           <Typography>{qortAmount * foreignAmount} LTC for {qortAmount} QORT</Typography>
+           <Typography>{`${qortAmount * foreignAmount} ${getCoinLabel()}`} for {qortAmount} QORT</Typography>
             <Typography sx={{
               fontSize: '12px'
-            }}>Total sell amount needs to be greater than: {minimumAmountSellTrades.LITECOIN.value} {' '} {minimumAmountSellTrades.LITECOIN.ticker}</Typography>
+            }}>Total sell amount needs to be greater than: {minimumAmountSellTrades[selectedCoin]?.value} {' '} {minimumAmountSellTrades[selectedCoin]?.ticker}</Typography>
           </Box>
 
         </DialogContent>
@@ -236,7 +254,7 @@ export const CreateSell = ({qortAddress, show}) => {
           <Button autoFocus onClick={handleClose}>
             Close
           </Button>
-          <Button disabled={!qortAmount || !(qortAmount * foreignAmount > minimumAmountSellTrades.LITECOIN.value)} autoFocus onClick={createSellOrder}>
+          <Button disabled={!qortAmount || !(qortAmount * foreignAmount > minimumAmountSellTrades[selectedCoin]?.value)} autoFocus onClick={createSellOrder}>
             Create sell order
           </Button>
         </DialogActions>

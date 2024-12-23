@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ReactGA from "react-ga4";
 import "./App.css";
 import socketService from "./services/socketService";
@@ -71,7 +71,12 @@ export async function sendRequestToExtension(
 function App() {
   const [userInfo, setUserInfo] = useState<any>(null);
   const [qortBalance, setQortBalance] = useState<any>(null);
-  const [ltcBalance, setLtcBalance] = useState<any>(null);
+  const [balances, setBalances] = useState<any>({});
+  const [selectedCoin, setSelectedCoin] = useState("LITECOIN");
+
+  const foreignCoinBalance = useMemo(()=> {
+    return balances[selectedCoin] || null
+  }, [balances, selectedCoin])
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [OAuthLoading, setOAuthLoading] = useState<boolean>(false);
   const db = useIndexedDBContext();
@@ -172,14 +177,19 @@ function App() {
     setQortBalance(balanceResponse.data?.value)
   }
 
-  const getLTCBalance = async () => {
+  const getLTCBalance = async (coin) => {
     try {
       const response = await qortalRequest({
         action: "GET_WALLET_BALANCE",
-        coin: "LTC"
+        coin: getCoinLabel(coin)
       });
       if(!response?.error){
-        setLtcBalance(+response)
+        setBalances((prev)=> {
+          return {
+            ...prev,
+            [coin]: +response
+          }
+        })
       }
     } catch (error) {
    //
@@ -187,18 +197,18 @@ function App() {
   }
 
   useEffect(() => {
-    if(!userInfo?.address) return
+    if(!userInfo?.address || !selectedCoin) return
     const intervalGetTradeInfo = setInterval(() => {
       fetchOngoingTransactions()
-      getLTCBalance()
+      getLTCBalance(selectedCoin)
       getQortBalance()
     }, 150000)
-    getLTCBalance()
+    getLTCBalance(selectedCoin)
       getQortBalance()
     return () => {
       clearInterval(intervalGetTradeInfo)
     }
-  }, [userInfo?.address, isAuthenticated])
+  }, [userInfo?.address, isAuthenticated, selectedCoin])
 
 
   const handleMessage = async (event: any) => {
@@ -208,7 +218,6 @@ function App() {
       setAvatar("");
       setIsAuthenticated(false);
       setQortBalance(null)
-      setLtcBalance(null)
       localStorage.setItem("token", "");
     } else if(event.data.type === "RESPONSE_FOR_TRADES"){
     
@@ -246,6 +255,37 @@ function App() {
     };
   }, [userInfo?.address]);
 
+  const getCoinLabel = (coin?: string)=> {
+    switch(coin || selectedCoin){
+      case "LITECOIN":{
+
+        return 'LTC'
+      }
+      case "DOGECOIN":{
+
+        return 'DOGE'
+      }
+      case "BITCOIN":{
+
+        return 'BTC'
+      }
+      case "DIGIBYTE":{
+
+        return 'DGB'
+      }
+      case "RAVENCOIN":{
+
+        return 'RVN'
+      }
+      case "PIRATECHAIN":{
+
+        return 'ARRR'
+      }
+      default: 
+      return null
+    }
+  }
+
   const gameContextValue: IContextProps = {
     userInfo,
     setUserInfo,
@@ -253,7 +293,7 @@ function App() {
     setUserNameAvatar,
     onGoingTrades,
     fetchOngoingTransactions,
-    ltcBalance,
+    foreignCoinBalance,
     qortBalance,
     isAuthenticated, 
     setIsAuthenticated,
@@ -261,7 +301,7 @@ function App() {
     setOAuthLoading,
     updateTransactionInDB,
     sellOrders,
-    deleteTemporarySellOrder, updateTemporaryFailedTradeBots, fetchTemporarySellOrders, isUsingGateway
+    deleteTemporarySellOrder, updateTemporaryFailedTradeBots, fetchTemporarySellOrders, isUsingGateway, selectedCoin, setSelectedCoin, getCoinLabel
   };
 
   

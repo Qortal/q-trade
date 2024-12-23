@@ -11,6 +11,9 @@ import { subscribeToEvent, unsubscribeFromEvent } from '../../utils/events';
 import { useModal } from '../common/useModal';
 import FileSaver from 'file-saver';
 
+// export const baseLocalHost = window.location.host
+export const baseLocalHost = '127.0.0.1:12391'
+
 interface RowData {
   amountQORT: number;
   priceUSD: number;
@@ -32,10 +35,10 @@ export const autoSizeStrategy: SizeColumnsToContentStrategy = {
   type: 'fitCellContents'
 };
 
-export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
+export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
   const [offers, setOffers] = useState<any[]>([])
-  
-  const { fetchOngoingTransactions, onGoingTrades, updateTransactionInDB, isUsingGateway } = useContext(gameContext);
+  const [qortalNames, setQortalNames] = useState({})
+  const { fetchOngoingTransactions, onGoingTrades, updateTransactionInDB, isUsingGateway, getCoinLabel, selectedCoin } = useContext(gameContext);
   const listOfOngoingTradesAts = useMemo(()=> {
       return onGoingTrades?.filter((item)=> item?.status !== 'trade-failed')?.map((trade)=> trade?.qortalAtAddress) || []
   }, [onGoingTrades])
@@ -50,7 +53,7 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
   const offersWithoutOngoing = useMemo(()=> {
     return offers.filter((item)=> !listOfOngoingTradesAts.includes(item.qortalAtAddress))
   }, [listOfOngoingTradesAts, offers])
-
+  const initiatedFetchPresence = useRef(false)
  
   
   const [selectedOffer, setSelectedOffer] = useState<any>(null)
@@ -80,6 +83,30 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
     suppressMovable: true, // Prevent columns from being movable
   };
 
+  const getName = async (address)=> {
+    try {
+      const response = await fetch("/names/address/" + address);
+    const nameData = await response.json();
+    if (nameData?.length > 0) {
+      setQortalNames((prev)=> {
+        return {
+          ...prev,
+          [address]: nameData[0].name
+        }
+      })
+    } else {
+      setQortalNames((prev)=> {
+        return {
+          ...prev,
+          [address]: null
+        }
+      })
+    }
+    } catch (error) {
+      // error
+    }
+  }
+
   const columnDefs: ColDef[] = [
     { 
       headerCheckboxSelection: true, // Adds a checkbox in the header for selecting all rows
@@ -92,15 +119,28 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
     { headerName: "QORT AMOUNT", field: "qortAmount" , flex: 1, // Flex makes this column responsive
     minWidth: 150, // Ensure it doesn't shrink too much
     resizable: true },
-    { headerName: "LTC/QORT", valueGetter: (params) => +params.data.foreignAmount / +params.data.qortAmount, sortable: true, sort: 'asc', flex: 1, // Flex makes this column responsive
+    { headerName: `${getCoinLabel()}/QORT`, valueGetter: (params) => +params.data.foreignAmount / +params.data.qortAmount, sortable: true, sort: 'asc', flex: 1, // Flex makes this column responsive
     minWidth: 150, // Ensure it doesn't shrink too much
     resizable: true  },
-    { headerName: "Total LTC Value", field: "foreignAmount", flex: 1, // Flex makes this column responsive
+    { headerName: `Total ${getCoinLabel()} Value`, field: "foreignAmount", flex: 1, // Flex makes this column responsive
     minWidth: 150, // Ensure it doesn't shrink too much
     resizable: true },
     { headerName: "Seller", field: "qortalCreator", flex: 1, // Flex makes this column responsive
     minWidth: 300, // Ensure it doesn't shrink too much
-    resizable: true },
+    resizable: true, valueGetter: (params)=> {
+      if(params?.data?.qortalCreator){
+        if(qortalNames[params?.data?.qortalCreator]){
+          return qortalNames[params?.data?.qortalCreator] 
+        } else if(qortalNames[params?.data?.qortalCreator] === undefined){
+          getName(params?.data?.qortalCreator)
+
+          return params?.data?.qortalCreator
+        } else {
+          return params?.data?.qortalCreator
+
+        }
+      }
+    } },
   ];
 
  
@@ -225,7 +265,7 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
     if(isUsingGateway){
       socketLink = `wss://appnode.qortal.org/websockets/crosschain/tradepresence`
     } else {
-      socketLink = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/websockets/crosschain/tradepresence`;
+      socketLink = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${baseLocalHost}/websockets/crosschain/tradepresence`;
 
     }
     
@@ -245,44 +285,59 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
     }
     socket.onerror = (e) => {
       clearTimeout(socketTimeout)
+      restartTradePresenceWebSocket()
     }
     const pingSocket = () => {
       socket.send('ping')
       socketTimeout = setTimeout(pingSocket, 295000)
     }
   }
+  const socketRef = useRef(null)
+
+  const restartTradeOffers = ()=> {
+    if (socketRef.current) {
+      socketRef.current.close(1000, 'forced'); // Close with a custom reason
+      socketRef.current = null
+    }
+    offeringTrades.current = []
+    setOffers([])
+    setSelectedOffer(null)
+  }
 
   const initTradeOffersWebSocket = (restarted = false) => {
-    let tradeOffersSocketCounter = 0
+
+    if(socketRef.current) return
     let socketTimeout: any
 
     let socketLink 
     if(isUsingGateway){
-      socketLink = `wss://appnode.qortal.org/websockets/crosschain/tradeoffers?foreignBlockchain=LITECOIN&includeHistoric=true`
+      socketLink = `wss://appnode.qortal.org/websockets/crosschain/tradeoffers?foreignBlockchain=${selectedCoin}&includeHistoric=true`
     } else {
-      socketLink = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/websockets/crosschain/tradeoffers?foreignBlockchain=LITECOIN&includeHistoric=true`
+      socketLink = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${baseLocalHost}/websockets/crosschain/tradeoffers?foreignBlockchain=${selectedCoin}&includeHistoric=true`
 
     }
-    const socket = new WebSocket(socketLink)
-    socket.onopen = () => {
+    socketRef.current = new WebSocket(socketLink)
+    socketRef.current.onopen = () => {
       setTimeout(pingSocket, 50)
-      tradeOffersSocketCounter += 1
     }
-    socket.onmessage = (e) => {
-      offeringTrades.current = [...offeringTrades.current, ...JSON.parse(e.data)]
-      tradeOffersSocketCounter += 1
+    socketRef.current.onmessage = (e) => {
+      offeringTrades.current = [...offeringTrades.current?.filter((coin)=> coin?.foreignBlockchain === selectedCoin), ...JSON.parse(e.data)?.filter((coin)=> coin?.foreignBlockchain === selectedCoin)]
       restarted = false
       processOffersWithPresence()
     }
-    socket.onclose = () => {
+    socketRef.current.onclose = (event) => {
       clearTimeout(socketTimeout)
+      if (event.reason === 'forced') {
+        return
+      }
       restartTradeOffersWebSocket()
+      socketRef.current = null
     }
-    socket.onerror = (e) => {
+    socketRef.current.onerror = (e) => {
       clearTimeout(socketTimeout)
     }
     const pingSocket = () => {
-      socket.send('ping')
+      socketRef.current.send('ping')
       socketTimeout = setTimeout(pingSocket, 295000)
     }
   }
@@ -290,8 +345,11 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
 
   useEffect(() => {
     blockedTradesList.current = JSON.parse(localStorage.getItem('failedTrades') || '[]')
-    initTradePresenceWebSocket()
-    initTradeOffersWebSocket()
+    if(!initiatedFetchPresence.current){
+      initiatedFetchPresence.current = true
+      initTradePresenceWebSocket()
+
+    }
     getNewBlockedTrades()
     const intervalBlockTrades = setInterval(() => {
       getNewBlockedTrades()
@@ -301,6 +359,24 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
       clearInterval(intervalBlockTrades)
     }
   }, [isUsingGateway])
+
+ 
+
+  useEffect(() => {
+    if(selectedCoin === null) return
+    restartTradeOffers()
+    setTimeout(() => {
+      initTradeOffersWebSocket()
+
+    }, 500);
+    return () => {
+      if(socketRef.current){
+        socketRef.current.close(1000, 'forced');
+      }
+    }
+  }, [isUsingGateway, selectedCoin])
+
+
 
 
 
@@ -313,11 +389,11 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
 
   const buyOrder = async () => {
     try {
-      if(+ltcBalance < +selectedTotalLTC.toFixed(4)){
+      if(+foreignCoinBalance < +selectedTotalLTC.toFixed(4)){
         setOpen(true)
         setInfo({
           type: 'error',
-          message: "You don't have enough LTC or your balance was not retrieved"
+          message: `You don't have enough ${getCoinLabel()} or your balance was not retrieved`
         })
         return
       }
@@ -329,11 +405,10 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
         message: "Attempting to submit buy order. Please wait..."
       })
       const listOfATs = selectedOffers
-
       const response = await qortalRequestWithTimeout({
         action: "CREATE_TRADE_BUY_ORDER",
         crosschainAtInfo: listOfATs,
-        foreignBlockchain: 'LITECOIN'
+        foreignBlockchain: selectedCoin
       }, 900000);
  
       if(response?.error){
@@ -381,7 +456,7 @@ export const TradeOffers: React.FC<any> = ({ltcBalance}:any) => {
       setOpen(true)
       setInfo({
         type: 'error',
-        message: error?.message || "Failed to submit trade order."
+        message: error?.error || error?.message || "Failed to submit trade order."
       })
       console.error(error)
     }
@@ -471,7 +546,7 @@ const handleClose = (
         onSelectionChanged={onSelectionChanged}
         getRowStyle={getRowStyle}
         autoSizeStrategy={autoSizeStrategy}
-        rowSelection="multiple" // Enable multi-select
+        rowSelection={selectedCoin ===  'PIRATECHAIN' ? "single" :"multiple"} // Enable multi-select
         rowMultiSelectWithClick={true}
         suppressHorizontalScroll={false} // Allow horizontal scroll on mobile if needed
         suppressCellFocus={true} // Prevents cells from stealing focus in mobile
@@ -486,6 +561,9 @@ const handleClose = (
 
       )} */}
     </div>
+    <div style={{
+      height: '120px'
+    }} />
     <Box sx={{
       width: '100%',
       display: 'flex',
@@ -517,10 +595,10 @@ const handleClose = (
       }}>
          <Typography sx={{
           fontSize: '16px',
-          color: selectedTotalLTC > ltcBalance ? 'red' : 'white',
+          color: selectedTotalLTC > foreignCoinBalance ? 'red' : 'white',
         }}><span>{selectedTotalLTC?.toFixed(4)}</span> <span style={{
           marginLeft: 'auto'
-        }}>LTC</span></Typography>
+        }}>{`${getCoinLabel()} `}</span></Typography>
 
 
         </Box>
@@ -528,9 +606,9 @@ const handleClose = (
           fontSize: '16px',
           color: 'white',
           
-        }}><span>{ltcBalance?.toFixed(4)}</span> <span style={{
+        }}><span>{foreignCoinBalance?.toFixed(4)}</span> <span style={{
           marginLeft: 'auto'
-        }}>LTC balance</span></Typography>
+        }}>{`${getCoinLabel()} `} balance</span></Typography>
       </Box>
       {BuyButton()}
     </Box>
