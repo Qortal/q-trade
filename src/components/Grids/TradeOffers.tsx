@@ -10,6 +10,7 @@ import gameContext from '../../contexts/gameContext';
 import { subscribeToEvent, unsubscribeFromEvent } from '../../utils/events';
 import { useModal } from '../common/useModal';
 import FileSaver from 'file-saver';
+import { BuyContainer } from './Table-styles';
 
 export const baseLocalHost = window.location.host
 // export const baseLocalHost = '127.0.0.1:12391'
@@ -587,18 +588,7 @@ const handleClose = (
     <div style={{
       height: '120px'
     }} />
-    <Box sx={{
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      position: 'fixed',
-      bottom: '0px',
-      height: '100px',
-      padding: '7px',
-      background: '#181d1f',
-
-    }}>
+    <BuyContainer>
       <Box sx={{
         display: 'flex',
         gap: '5px',
@@ -634,7 +624,7 @@ const handleClose = (
         }}>{`${getCoinLabel()} `} balance</span></Typography>
       </Box>
       {BuyButton()}
-    </Box>
+    </BuyContainer>
     <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} open={open}  onClose={handleClose}>
         <Alert
                 

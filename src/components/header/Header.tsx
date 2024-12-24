@@ -1,25 +1,21 @@
 import { useState, useEffect, useRef, useContext, ChangeEvent } from "react";
-import ReactGA from "react-ga4";
 import {
-  AvatarCircle,
-  CaretDownIcon,
-  DropdownContainer,
-  GameSelectDropdown,
-  GameSelectDropdownMenu,
-  GameSelectDropdownMenuItem,
+  BubbleCardColored1,
+  CoinActionsRow,
+  CoinReceiveBtn,
+  CoinSelectRow,
+  CoinSendBtn,
   HeaderNav,
   HeaderText,
-  HomeIcon,
   LogoColumn,
   NameRow,
-  QortalLogoIcon,
   RightColumn,
+  TotalCol,
   Username,
 } from "./Header-styles";
 import gameContext from "../../contexts/gameContext";
 import { UserContext } from "../../contexts/userContext";
 import { cropAddress } from "../../utils/cropAddress";
-import { BubbleCardColored1 } from "../../pages/Home/Home-Styles";
 import qtradeLogo from "../../components/common/icons/qtradeLogo.png";
 import qortIcon from "../../assets/img/qort.png";
 import {
@@ -27,7 +23,6 @@ import {
   AppBar,
   Avatar,
   Box,
-  Button,
   Card,
   CardContent,
   FormControlLabel,
@@ -70,7 +65,7 @@ export const Label = styled("label")(
   `
 );
 
-const getCoinIcon = (coin)=> {
+const getCoinIcon = (coin) => {
   let img;
 
   switch (coin) {
@@ -97,12 +92,11 @@ const getCoinIcon = (coin)=> {
     default:
       null;
   }
-  return img
-}
+  return img;
+};
 
 const SelectRow = ({ coin }) => {
-  let img = getCoinIcon(coin)
- 
+  let img = getCoinIcon(coin);
 
   return (
     <div
@@ -125,12 +119,7 @@ const SelectRow = ({ coin }) => {
   );
 };
 
-export const Header = ({
-  qortBalance,
-  foreignCoinBalance,
-  mode,
-  setMode,
-}: any) => {
+export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -320,122 +309,82 @@ export const Header = ({
             <CardContent>
               <HeaderText>Total Balance</HeaderText>
               <Spacer height="10px" />
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: "20px",
-                  alignItems: "center",
-                }}
-              >
-                <img
-                  src={qortIcon}
-                  style={{
-                    height: "25px",
-                    width: "auto",
+              <TotalCol>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "center",
                   }}
-                />
-                <HeaderText>{qortBalance} QORT</HeaderText>
-              </Box>
+                >
+                  <img
+                    src={qortIcon}
+                    style={{
+                      height: "25px",
+                      width: "auto",
+                    }}
+                  />
+                  <HeaderText>{qortBalance} QORT</HeaderText>
+                </Box>
+                <CoinActionsRow>
+                  <CoinSendBtn>Send</CoinSendBtn>
+                  <CoinReceiveBtn>Receive</CoinReceiveBtn>
+                </CoinActionsRow>
+              </TotalCol>
               <Spacer height="10px" />
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: "20px",
-                  alignItems: "center",
-                }}
-              >
-                <img
-                  src={getCoinIcon(getCoinLabel())}
-                  style={{
-                    height: "25px",
-                    width: "auto",
+              <TotalCol>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "center",
                   }}
-                />
-                 {foreignCoinBalance === null ? "N/A" : foreignCoinBalance}{" "}
-                {getCoinLabel()}
-              </Box>
-            
+                >
+                  <img
+                    src={getCoinIcon(getCoinLabel())}
+                    style={{
+                      height: "25px",
+                      width: "auto",
+                    }}
+                  />
+                  {foreignCoinBalance === null ? "N/A" : foreignCoinBalance}{" "}
+                  {getCoinLabel()}
+                </Box>
+                <CoinActionsRow>
+                  <CoinSendBtn>Send</CoinSendBtn>
+                  <CoinReceiveBtn>Receive</CoinReceiveBtn>
+                </CoinActionsRow>
+              </TotalCol>
             </CardContent>
           </Card>
         </RightColumn>
 
-        <Box
-          sx={{
-            display: "flex",
-            gap: "20px",
-            alignItems: "center",
-            width: "100%",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "5px",
-            }}
+        <CoinSelectRow>
+          <Select
+            size="small"
+            value={selectedCoin}
+            onChange={(e) => setSelectedCoin(e.target.value)}
           >
-            <Select
-              size="small"
-              value={selectedCoin}
-              onChange={(e) => setSelectedCoin(e.target.value)}
-            >
-              <MenuItem value={"LITECOIN"}>
-                <SelectRow coin="LTC" />
-              </MenuItem>
-              <MenuItem value={"DOGECOIN"}>
-                <SelectRow coin="DOGE" />
-              </MenuItem>
-              <MenuItem value={"BITCOIN"}>
-                <SelectRow coin="BTC" />
-              </MenuItem>
-              <MenuItem value={"DIGIBYTE"}>
-                <SelectRow coin="DGB" />
-              </MenuItem>
-              <MenuItem value={"RAVENCOIN"}>
-                <SelectRow coin="RVN" />
-              </MenuItem>
-              <MenuItem value={"PIRATECHAIN"}>
-                <SelectRow coin="ARRR" />
-              </MenuItem>
-            </Select>
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              gap: "20px",
-              alignItems: "center",
-            }}
-          >
-            <Button
-              sx={{
-                opacity: 0.8,
-                "&:hover": {
-                  background: mode === "buy" ? "#0085ff" : "unset",
-                  opacity: 1,
-                },
-              }}
-              variant={mode === "buy" ? "contained" : "text"}
-              onClick={() => setMode("buy")}
-            >
-              Buy QORT
-            </Button>
-            <Button
-              sx={{
-                opacity: 0.8,
-                "&:hover": {
-                  background: mode === "sell" ? "#0085ff" : "unset",
-                  opacity: 1,
-                },
-              }}
-              variant={mode === "sell" ? "contained" : "text"}
-              onClick={() => setMode("sell")}
-            >
-              SELL QORT
-            </Button>
-          </Box>
-        </Box>
-
+            <MenuItem value={"LITECOIN"}>
+              <SelectRow coin="LTC" />
+            </MenuItem>
+            <MenuItem value={"DOGECOIN"}>
+              <SelectRow coin="DOGE" />
+            </MenuItem>
+            <MenuItem value={"BITCOIN"}>
+              <SelectRow coin="BTC" />
+            </MenuItem>
+            <MenuItem value={"DIGIBYTE"}>
+              <SelectRow coin="DGB" />
+            </MenuItem>
+            <MenuItem value={"RAVENCOIN"}>
+              <SelectRow coin="RVN" />
+            </MenuItem>
+            <MenuItem value={"PIRATECHAIN"}>
+              <SelectRow coin="ARRR" />
+            </MenuItem>
+          </Select>
+        </CoinSelectRow>
         <Snackbar
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           open={open}
