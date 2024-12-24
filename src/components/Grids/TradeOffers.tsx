@@ -109,6 +109,23 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
     }
   }
 
+    const restartTradeOffers = ()=> {
+    if (socketRef.current) {
+      socketRef.current.close(1000, 'forced'); // Close with a custom reason
+      socketRef.current = null
+    }
+    offeringTrades.current = []
+    setOffers([])
+    setSelectedOffer(null)
+  }
+
+  const restartPresence = ()=> {
+    if (socketPresenceRef.current) {
+      socketPresenceRef.current.close(1000, 'forced'); // Close with a custom reason
+      socketPresenceRef.current = null
+    }
+  }
+
   const columnDefs: ColDef[] = useMemo(()=> {
     return [
       { 
@@ -260,10 +277,12 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
   }
 
   const restartTradeOffersWebSocket = () => {
+    restartPresence()
     setTimeout(() => initTradeOffersWebSocket(true), 50)
   }
 
   const initTradePresenceWebSocket = (restarted = false) => {
+    if(socketPresenceRef.current) return
     let socketTimeout: any
     let socketLink 
     if(isUsingGateway){
@@ -302,22 +321,7 @@ export const TradeOffers: React.FC<any> = ({foreignCoinBalance}:any) => {
   }
 
 
-  const restartTradeOffers = ()=> {
-    if (socketRef.current) {
-      socketRef.current.close(1000, 'forced'); // Close with a custom reason
-      socketRef.current = null
-    }
-    offeringTrades.current = []
-    setOffers([])
-    setSelectedOffer(null)
-  }
 
-  const restartPresence = ()=> {
-    if (socketPresenceRef.current) {
-      socketPresenceRef.current.close(1000, 'forced'); // Close with a custom reason
-      socketPresenceRef.current = null
-    }
-  }
 
   const initTradeOffersWebSocket = (restarted = false) => {
 
