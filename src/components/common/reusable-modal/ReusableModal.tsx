@@ -1,20 +1,26 @@
 import {
   ReusableModalBackdrop,
+  ReusableModalCloseIcon,
   ReusableModalContainer,
-  ReusableModalSubContainer,
 } from "./ReusableModal-styles";
 interface ReusableModalProps {
   backdrop?: boolean;
+  onClickClose: () => void;
   children: React.ReactNode;
 }
 
-export const ReusableModal: React.FC<ReusableModalProps> = ({ backdrop, children }) => {
+export const ReusableModal: React.FC<ReusableModalProps> = ({
+  backdrop,
+  children,
+  onClickClose,
+}) => {
   return (
     <>
       <ReusableModalContainer>
-        <ReusableModalSubContainer>{children}</ReusableModalSubContainer>
+        <ReusableModalCloseIcon onClick={onClickClose} />
+        {children}
       </ReusableModalContainer>
-      {backdrop && <ReusableModalBackdrop />}
+      {backdrop && <ReusableModalBackdrop onClick={onClickClose} />}
     </>
   );
 };

@@ -1,5 +1,5 @@
 import { styled } from "@mui/system";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, Theme, TextField } from "@mui/material";
 import { HomeSVG } from "../common/icons/HomeSVG";
 import { QortalLogoSVG } from "../common/icons/QortalLogoSVG";
 import { CaretDownSVG } from "../common/icons/CaretDownSVG";
@@ -217,3 +217,123 @@ export const CoinSelectRow = styled(Box)({
   gap: "5px",
   alignSelf: "flex-start",
 });
+
+export const CoinActionContainer = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  gap: "25px",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "80%",
+});
+
+export const CoinActionRow = styled(Box)({
+  display: "flex",
+  flexDirection: "row",
+  width: "100%",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+export const HeaderRow = styled(Box)({
+  display: "flex",
+  flexDirection: "row",
+  gap: "10px",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+export const SendFont = styled(Typography)(({ theme }) => ({
+  fontFamily: "Inter",
+  color: theme.palette.text.primary,
+  fontWeight: 400,
+  fontSize: "18px",
+  lineHeight: "25px",
+  userSelect: "none",
+}));
+
+const customInputStyle = (theme: Theme) => {
+  return {
+    fontFamily: "Inter",
+    fontSize: "18px",
+    fontWeight: 300,
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.background.default,
+    borderColor: theme.palette.background.paper,
+    "& label": {
+      color: theme.palette.mode === "light" ? "#808183" : "#edeef0",
+      fontFamily: "Inter",
+      fontSize: "18px",
+      letterSpacing: "0px",
+    },
+    "& label.Mui-focused": {
+      color: theme.palette.mode === "light" ? "#A0AAB4" : "#d7d8da",
+    },
+    "& .MuiInput-underline:after": {
+      borderBottomColor: theme.palette.mode === "light" ? "#B2BAC2" : "#c9cccf",
+    },
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "#E0E3E7",
+      },
+      "&:hover fieldset": {
+        borderColor: "#B2BAC2",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "#6F7E8C",
+      },
+    },
+    "& .MuiInputBase-root": {
+      fontFamily: "Inter",
+      fontSize: "18px",
+      letterSpacing: "0px",
+    },
+    "& .MuiFilledInput-root:after": {
+      borderBottomColor: theme.palette.secondary.main,
+    },
+  };
+};
+
+export const CustomInputField = styled(TextField)(({ theme }) =>
+  customInputStyle(theme as Theme)
+);
+
+export const CoinCancelBtn = styled(Button)({
+  backgroundColor: "transparent",
+  color: "#d62525",
+  border: "1px solid #d62525",
+  fontFamily: "Inter, sans-serif",
+  fontWeight: 500,
+  fontSize: "14px",
+  height: "32px",
+  width: "80px",
+  lineHeight: "16px",
+  padding: "5px 10px",
+  borderRadius: "0px",
+  transition: "all 0.3s ease-in-out",
+  "&:hover": {
+    border: "1px solid #d62525",
+    backgroundColor: "#d62525",
+    color: "#000000"
+  },
+});
+
+export const CoinConfirmSendBtn = styled(Button)(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: "#000000",
+  border: `1px solid ${theme.palette.primary.main}`,
+  fontFamily: "Inter, sans-serif",
+  fontWeight: 500,
+  fontSize: "14px",
+  height: "32px",
+  width: "80px",
+  lineHeight: "16px",
+  padding: "5px 10px",
+  borderRadius: "0px",
+  transition: "all 0.3s ease-in-out",
+  "&:hover": {
+    border: `1px solid ${theme.palette.text.primary}`,
+    color: "#000000",
+    backgroundColor: theme.palette.text.primary,
+  },
+}));

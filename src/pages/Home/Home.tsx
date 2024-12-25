@@ -8,7 +8,6 @@ import { OngoingTrades } from "../../components/Grids/OngoingTrades";
 import { Box } from "@mui/material";
 import { TextTableTitle } from "../../components/Grids/Table-styles";
 import { Spacer } from "../../components/common/Spacer";
-import { ReusableModal } from "../../components/common/reusable-modal/ReusableModal";
 import { Tab, TabDivider, TabsContainer, TabsRow } from "./Home-Styles";
 import { CreateSell } from "../../components/sell/CreateSell";
 import { History } from "../../components/history/History";

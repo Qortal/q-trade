@@ -1,15 +1,22 @@
 import { useState, useEffect, useRef, useContext, ChangeEvent } from "react";
 import {
   BubbleCardColored1,
+  CoinActionContainer,
+  CoinActionRow,
   CoinActionsRow,
+  CoinCancelBtn,
+  CoinConfirmSendBtn,
   CoinReceiveBtn,
   CoinSelectRow,
   CoinSendBtn,
+  CustomInputField,
   HeaderNav,
+  HeaderRow,
   HeaderText,
   LogoColumn,
   NameRow,
   RightColumn,
+  SendFont,
   TotalCol,
   Username,
 } from "./Header-styles";
@@ -25,6 +32,7 @@ import {
   Box,
   Card,
   CardContent,
+  FormControl,
   FormControlLabel,
   MenuItem,
   Select,
@@ -42,6 +50,8 @@ import rvnIcon from "../../assets/img/rvn.png";
 import dgbIcon from "../../assets/img/dgb.png";
 import arrrIcon from "../../assets/img/arrr.png";
 import { Spacer } from "../common/Spacer";
+import { ReusableModal } from "../common/reusable-modal/ReusableModal";
+import { NotificationContext } from "../../contexts/notificationContext";
 
 const checkIfLocal = async () => {
   try {
@@ -64,6 +74,11 @@ export const Label = styled("label")(
   font-weight: 400;
   `
 );
+
+interface CoinModalProps {
+  coin: string;
+  type: string;
+}
 
 const getCoinIcon = (coin) => {
   let img;
@@ -126,6 +141,11 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
   const [checked, setChecked] = useState(false);
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<any>(null);
+  const [openCoinActionModal, setOpenCoinActionModal] =
+    useState<CoinModalProps | null>(null);
+  const [receiverAddress, setReceiverAddress] = useState<string>("");
+  const [senderAddress, setSenderAddress] = useState<string>("");
+
   const { isUsingGateway } = useContext(gameContext);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -138,7 +158,7 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
   };
   const { userInfo, selectedCoin, setSelectedCoin, getCoinLabel } =
     useContext(gameContext);
-  const { avatar, setAvatar } = useContext(UserContext);
+  const { setNotification } = useContext(NotificationContext);
 
   const LocalNodeSwitch = styled(Switch)(({ theme }) => ({
     padding: 8,
@@ -327,8 +347,26 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                   <HeaderText>{qortBalance} QORT</HeaderText>
                 </Box>
                 <CoinActionsRow>
-                  <CoinSendBtn>Send</CoinSendBtn>
-                  <CoinReceiveBtn>Receive</CoinReceiveBtn>
+                  <CoinSendBtn
+                    onClick={() => {
+                      setOpenCoinActionModal({
+                        coin: "QORT",
+                        type: "send",
+                      });
+                    }}
+                  >
+                    Send
+                  </CoinSendBtn>
+                  <CoinReceiveBtn
+                    onClick={() => {
+                      setOpenCoinActionModal({
+                        coin: "QORT",
+                        type: "receive",
+                      });
+                    }}
+                  >
+                    Receive
+                  </CoinReceiveBtn>
                 </CoinActionsRow>
               </TotalCol>
               <Spacer height="10px" />
@@ -351,8 +389,26 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                   {getCoinLabel()}
                 </Box>
                 <CoinActionsRow>
-                  <CoinSendBtn>Send</CoinSendBtn>
-                  <CoinReceiveBtn>Receive</CoinReceiveBtn>
+                  <CoinSendBtn
+                    onClick={() => {
+                      setOpenCoinActionModal({
+                        coin: selectedCoin,
+                        type: "send",
+                      });
+                    }}
+                  >
+                    Send
+                  </CoinSendBtn>
+                  <CoinReceiveBtn
+                    onClick={() => {
+                      setOpenCoinActionModal({
+                        coin: selectedCoin,
+                        type: "receive",
+                      });
+                    }}
+                  >
+                    Receive
+                  </CoinReceiveBtn>
                 </CoinActionsRow>
               </TotalCol>
             </CardContent>
@@ -400,6 +456,116 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
             {info?.message}
           </Alert>
         </Snackbar>
+        {openCoinActionModal && (
+          <ReusableModal
+            onClickClose={() => {
+              setOpenCoinActionModal(null);
+            }}
+            backdrop
+          >
+            <CoinActionContainer>
+              <CoinActionRow>
+                <HeaderRow>
+                  {openCoinActionModal.type === "send" &&
+                  openCoinActionModal.coin === "QORT" ? (
+                    <>
+                      <SendFont>Send {openCoinActionModal.coin}</SendFont>
+                      <img
+                        src={qortIcon}
+                        style={{
+                          height: "25px",
+                          width: "auto",
+                        }}
+                      />
+                    </>
+                  ) : openCoinActionModal.type === "send" &&
+                    openCoinActionModal.coin !== "QORT" ? (
+                    <>
+                      <SendFont>Send {openCoinActionModal.coin}</SendFont>
+                      <img
+                        src={getCoinIcon(getCoinLabel())}
+                        style={{
+                          height: "25px",
+                          width: "auto",
+                        }}
+                      />
+                    </>
+                  ) : openCoinActionModal.type === "receive" &&
+                    openCoinActionModal.coin === "QORT" ? (
+                    <>
+                      <SendFont>Receive {openCoinActionModal.coin}</SendFont>
+                      <img
+                        src={qortIcon}
+                        style={{
+                          height: "25px",
+                          width: "auto",
+                        }}
+                      />
+                    </>
+                  ) : openCoinActionModal.type === "receive" &&
+                    openCoinActionModal.coin !== "QORT" ? (
+                    <>
+                      <SendFont>Receive {openCoinActionModal.coin}</SendFont>
+                      <img
+                        src={getCoinIcon(getCoinLabel())}
+                        style={{
+                          height: "25px",
+                          width: "auto",
+                        }}
+                      />
+                    </>
+                  ) : null}
+                </HeaderRow>
+              </CoinActionRow>
+              <CoinActionRow>
+                <FormControl fullWidth>
+                  <CustomInputField
+                    style={{ flexGrow: 1 }}
+                    name={
+                      openCoinActionModal.type === "send"
+                        ? "Sender Address"
+                        : "Receive Address"
+                    }
+                    label={
+                      openCoinActionModal.type === "send"
+                        ? "Sender Address"
+                        : "Receive Address"
+                    }
+                    variant="filled"
+                    value={
+                      openCoinActionModal.type === "send"
+                        ? senderAddress
+                        : receiverAddress
+                    }
+                    required
+                    onChange={(e) => {
+                      if (openCoinActionModal.type === "send") {
+                        setSenderAddress(e.target.value);
+                      } else {
+                        setReceiverAddress(e.target.value);
+                      }
+                    }}
+                  />
+                </FormControl>
+              </CoinActionRow>
+              <CoinActionRow style={{gap: "10px"}}>
+                <CoinCancelBtn onClick={() => setOpenCoinActionModal(null)}>
+                  Cancel
+                </CoinCancelBtn>
+                <CoinConfirmSendBtn
+                  onClick={() => {
+                    setNotification({
+                      alertType: "alertInfo",
+                      msg: "Sending...",
+                    });
+                  }}
+                >
+                  {openCoinActionModal.type === "send" ? "Send" : "Receive"}
+                </CoinConfirmSendBtn>
+              </CoinActionRow>
+            </CoinActionContainer>
+          </ReusableModal>
+        )}
       </HeaderNav>
     </>
   );
