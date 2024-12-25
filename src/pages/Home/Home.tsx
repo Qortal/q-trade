@@ -11,6 +11,7 @@ import { Spacer } from "../../components/common/Spacer";
 import { ReusableModal } from "../../components/common/reusable-modal/ReusableModal";
 import { Tab, TabDivider, TabsContainer, TabsRow } from "./Home-Styles";
 import { CreateSell } from "../../components/sell/CreateSell";
+import { History } from "../../components/history/History";
 
 export const HomePage = () => {
   const {
@@ -22,7 +23,8 @@ export const HomePage = () => {
     onGoingTrades,
     selectedCoin,
   } = useContext(gameContext);
-  const [mode, setMode] = useState("buy");
+  const { setNotification } = useContext(NotificationContext);
+  const [mode, setMode] = useState("history");
   const filteredOngoingTrades = useMemo(() => {
     return onGoingTrades?.filter(
       (item) => item?.tradeInfo?.foreignBlockchain === selectedCoin
@@ -111,6 +113,7 @@ export const HomePage = () => {
         </div>
 
         <CreateSell show={mode === "sell"} qortAddress={userInfo?.address} />
+        <History show={mode === "history"} qortAddress={userInfo?.address} />
       </AppContainer>
     </>
   );
