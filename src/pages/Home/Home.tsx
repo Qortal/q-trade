@@ -16,6 +16,7 @@ import { Spacer } from "../../components/common/Spacer";
 import { ReusableModal } from "../../components/common/reusable-modal/ReusableModal";
 import { OAuthButton, OAuthButtonRow } from "./Home-Styles";
 import { CreateSell } from "../../components/sell/CreateSell";
+import { History } from "../../components/history/History";
 
 interface IsInstalledProps {}
 
@@ -34,7 +35,7 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
     selectedCoin
   } = useContext(gameContext);
   const { setNotification } = useContext(NotificationContext);
-  const [mode, setMode] = useState("buy");
+  const [mode, setMode] = useState("history");
   const filteredOngoingTrades = useMemo(()=> {
     return onGoingTrades?.filter((item)=> item?.tradeInfo?.foreignBlockchain === selectedCoin)
   }, [onGoingTrades, selectedCoin])
@@ -108,6 +109,7 @@ export const HomePage: FC<IsInstalledProps> = ({}) => {
       </div>
 
       <CreateSell show={mode === "sell"} qortAddress={userInfo?.address} />
+      <History show={mode === "history"} qortAddress={userInfo?.address} />
     </AppContainer>
     </>
   );
