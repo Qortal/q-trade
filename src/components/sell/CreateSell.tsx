@@ -232,7 +232,7 @@ export const CreateSell = ({qortAddress, show}) => {
             />
             <Spacer height="6px" />
             <CustomLabel htmlFor="standard-adornment-amount">
-              {`Price Each (${getCoinLabel()})`}
+              {`Price of Each QORT (in ${getCoinLabel()})`}
             </CustomLabel>
             <Spacer height="5px" />
             <CustomInput
@@ -245,7 +245,7 @@ export const CreateSell = ({qortAddress, show}) => {
             <Spacer height="6px" />
            <Typography>{`${qortAmount * foreignAmount} ${getCoinLabel()}`} for {qortAmount} QORT</Typography>
             <Typography sx={{
-              fontSize: '12px'
+              fontSize: '14px'
             }}>Total sell amount needs to be greater than: {minimumAmountSellTrades[selectedCoin]?.value} {' '} {minimumAmountSellTrades[selectedCoin]?.ticker}</Typography>
           </Box>
 
