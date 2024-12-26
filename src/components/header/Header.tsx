@@ -240,7 +240,7 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
 
   const sendCoin = async ()=> {
     try {
-      const coin = getCoinLabel()
+      const coin = openCoinActionModal.coin === "QORT" ? 'QORT' : getCoinLabel()
       if(!coin) return
       setOpen(true);
       setInfo({
@@ -537,31 +537,7 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                         }}
                       />
                     </>
-                  ) : openCoinActionModal.type === "receive" &&
-                    openCoinActionModal.coin === "QORT" ? (
-                    <>
-                      <SendFont>Receive {openCoinActionModal.coin}</SendFont>
-                      <img
-                        src={qortIcon}
-                        style={{
-                          height: "25px",
-                          width: "auto",
-                        }}
-                      />
-                    </>
-                  ) : openCoinActionModal.type === "receive" &&
-                    openCoinActionModal.coin !== "QORT" ? (
-                    <>
-                      <SendFont>Receive {openCoinActionModal.coin}</SendFont>
-                      <img
-                        src={getCoinIcon(getCoinLabel())}
-                        style={{
-                          height: "25px",
-                          width: "auto",
-                        }}
-                      />
-                    </>
-                  ) : null}
+                  )  : null}
                 </HeaderRow>
               </CoinActionRow>
               <CoinActionRow>
@@ -570,12 +546,12 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                     style={{ flexGrow: 1 }}
                     name={
                       openCoinActionModal.type === "send"
-                        ? "Recipient Address"
+                        ? `${openCoinActionModal.coin === "QORT" ? 'Recipient Address or Name' : 'Recipient Address'}`
                         : "Receive Address"
                     }
                     label={
                       openCoinActionModal.type === "send"
-                        ? "Recipient Address"
+                        ? `${openCoinActionModal.coin === "QORT" ? 'Recipient Address or Name' : 'Recipient Address'}`
                         : "Receive Address"
                     }
                     variant="filled"
@@ -617,14 +593,14 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
               )}
               </> : (
                 <>
-                <ReceiveCoin setOpen={setOpen} setInfo={setInfo} coinAddresses={coinAddresses} setCoinAddresses={setCoinAddresses} selectedCoin={getCoinLabel()} />
+                <ReceiveCoin setOpen={setOpen} setInfo={setInfo} coinAddresses={coinAddresses} setCoinAddresses={setCoinAddresses} selectedCoin={openCoinActionModal.coin === "QORT" ? 'QORT' :getCoinLabel()} />
                 </>
               )}
               {openCoinActionModal.type === 'send' && (
                  <CoinActionRow style={{gap: "10px"}}>
-                 <CoinCancelBtn onClick={() => setOpenCoinActionModal(null)}>
+                 {/* <CoinCancelBtn onClick={() => setOpenCoinActionModal(null)}>
                    Cancel
-                 </CoinCancelBtn>
+                 </CoinCancelBtn> */}
                  <CoinConfirmSendBtn
                    onClick={() => {
                      if(openCoinActionModal.type === 'send'){
