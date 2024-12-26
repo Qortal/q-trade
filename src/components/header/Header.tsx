@@ -29,6 +29,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import Copy from "../../assets/SVG/Copy.svg";
 import {AddressQRCode} from './AddressQRCode'
+import {FallingLines} from 'react-loader-spinner'
 import {
   Alert,
   AppBar,
@@ -426,7 +427,14 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                       width: "auto",
                     }}
                   />
-                  {foreignCoinBalance === null ? "N/A" : foreignCoinBalance}{" "}
+                  {foreignCoinBalance === null ? (
+                    <FallingLines
+                    color="white"
+                    width="30"
+                    visible={true}
+                    ariaLabel="falling-circles-loading"
+                    />
+                  ) : foreignCoinBalance}{" "}
                   {getCoinLabel()}
                 </Box>
                 <CoinActionsRow>

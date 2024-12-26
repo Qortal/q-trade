@@ -795,7 +795,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
               width: "450px",
               height: "450px",
               maxHeight: "calc(90vh - 55px)",
-              maxWidth: "90vw",
+              maxWidth: "90%",
               background: "rgb(39, 40, 44)",
               overflow: "auto",
             }}

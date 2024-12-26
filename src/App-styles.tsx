@@ -7,7 +7,10 @@ export const AppContainer = styled(Box)(({ theme }) => ({
   flexDirection: "column",
   alignItems: "flex-start",
   padding: "20px 30px 0 30px",
-  backgroundColor: "#323336"
+  backgroundColor: "#323336",
+  [`@media (max-width: 500px)`]: {
+    padding: "10px 5px 0 5px",
+  }
 }));
 
 export const MainContainer = styled(Box)`
