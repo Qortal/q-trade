@@ -432,7 +432,6 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                     color="white"
                     width="30"
                     visible={true}
-                    ariaLabel="falling-circles-loading"
                     />
                   ) : foreignCoinBalance}{" "}
                   {getCoinLabel()}
