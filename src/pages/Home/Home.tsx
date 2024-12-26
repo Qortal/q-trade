@@ -23,7 +23,7 @@ export const HomePage = () => {
     selectedCoin,
   } = useContext(gameContext);
   const { setNotification } = useContext(NotificationContext);
-  const [mode, setMode] = useState("history");
+  const [mode, setMode] = useState("buy");
   const filteredOngoingTrades = useMemo(() => {
     return onGoingTrades?.filter(
       (item) => item?.tradeInfo?.foreignBlockchain === selectedCoin

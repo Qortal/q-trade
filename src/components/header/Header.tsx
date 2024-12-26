@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext, ChangeEvent } from "react";
+import { useState, useEffect, useRef, useContext, ChangeEvent, useMemo } from "react";
 import {
   BubbleCardColored1,
   CoinActionContainer,
@@ -25,6 +25,11 @@ import { UserContext } from "../../contexts/userContext";
 import { cropAddress } from "../../utils/cropAddress";
 import qtradeLogo from "../../components/common/icons/qtradeLogo.png";
 import qortIcon from "../../assets/img/qort.png";
+import ErrorIcon from "@mui/icons-material/Error";
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import Copy from "../../assets/SVG/Copy.svg";
+import {AddressQRCode} from './AddressQRCode'
+import {FallingLines} from 'react-loader-spinner'
 import {
   Alert,
   AppBar,
@@ -39,6 +44,7 @@ import {
   Snackbar,
   SnackbarCloseReason,
   Switch,
+  Typography,
   styled,
 } from "@mui/material";
 import { sendRequestToExtension } from "../../App";
@@ -145,7 +151,8 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
     useState<CoinModalProps | null>(null);
   const [receiverAddress, setReceiverAddress] = useState<string>("");
   const [senderAddress, setSenderAddress] = useState<string>("");
-
+  const [amount, setAmount] = useState<string>("");
+  const [coinAddresses, setCoinAddresses] = useState({});
   const { isUsingGateway } = useContext(gameContext);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -159,6 +166,7 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
   const { userInfo, selectedCoin, setSelectedCoin, getCoinLabel } =
     useContext(gameContext);
   const { setNotification } = useContext(NotificationContext);
+
 
   const LocalNodeSwitch = styled(Switch)(({ theme }) => ({
     padding: 8,
@@ -230,6 +238,40 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
   //     getAvatar();
   //   }
   // }, [userInfo]);
+
+  const sendCoin = async ()=> {
+    try {
+      const coin = openCoinActionModal.coin === "QORT" ? 'QORT' : getCoinLabel()
+      if(!coin) return
+      setOpen(true);
+      setInfo({
+        type: "info",
+        message: "Sending Coin...",
+        autoHideDurationOff: true
+      });
+      const response = await qortalRequest({
+        action: "SEND_COIN",
+        coin,
+        destinationAddress: senderAddress,
+        amount: +amount
+    });
+    if(response?.error){
+      throw new Error(response?.error || "Failed to send coin.")
+    }
+    setOpen(true);
+      setInfo({
+        type: "success",
+        message: "Coin sent",
+      });
+      setAmount('')
+    } catch (error) {
+      setOpen(true);
+      setInfo({
+        type: "error",
+        message: error?.error || error?.message,
+      });
+    }
+  }
 
   return (
     <>
@@ -385,7 +427,13 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                       width: "auto",
                     }}
                   />
-                  {foreignCoinBalance === null ? "N/A" : foreignCoinBalance}{" "}
+                  {foreignCoinBalance === null ? (
+                    <FallingLines
+                    color="white"
+                    width="30"
+                    visible={true}
+                    />
+                  ) : foreignCoinBalance}{" "}
                   {getCoinLabel()}
                 </Box>
                 <CoinActionsRow>
@@ -444,10 +492,11 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
         <Snackbar
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           open={open}
-          autoHideDuration={6000}
+          autoHideDuration={info?.autoHideDurationOff ? null : 6000}
           onClose={handleClose}
         >
-          <Alert
+          {info?.type && (
+            <Alert
             onClose={handleClose}
             severity={info?.type}
             variant="filled"
@@ -455,15 +504,20 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
           >
             {info?.message}
           </Alert>
+          )}
+          
         </Snackbar>
         {openCoinActionModal && (
           <ReusableModal
             onClickClose={() => {
               setOpenCoinActionModal(null);
+              setAmount('')
+              setSenderAddress('')
             }}
             backdrop
           >
             <CoinActionContainer>
+              {openCoinActionModal.type === "send" ? <>
               <CoinActionRow>
                 <HeaderRow>
                   {openCoinActionModal.type === "send" &&
@@ -490,31 +544,7 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                         }}
                       />
                     </>
-                  ) : openCoinActionModal.type === "receive" &&
-                    openCoinActionModal.coin === "QORT" ? (
-                    <>
-                      <SendFont>Receive {openCoinActionModal.coin}</SendFont>
-                      <img
-                        src={qortIcon}
-                        style={{
-                          height: "25px",
-                          width: "auto",
-                        }}
-                      />
-                    </>
-                  ) : openCoinActionModal.type === "receive" &&
-                    openCoinActionModal.coin !== "QORT" ? (
-                    <>
-                      <SendFont>Receive {openCoinActionModal.coin}</SendFont>
-                      <img
-                        src={getCoinIcon(getCoinLabel())}
-                        style={{
-                          height: "25px",
-                          width: "auto",
-                        }}
-                      />
-                    </>
-                  ) : null}
+                  )  : null}
                 </HeaderRow>
               </CoinActionRow>
               <CoinActionRow>
@@ -523,12 +553,12 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                     style={{ flexGrow: 1 }}
                     name={
                       openCoinActionModal.type === "send"
-                        ? "Sender Address"
+                        ? `${openCoinActionModal.coin === "QORT" ? 'Recipient Address or Name' : 'Recipient Address'}`
                         : "Receive Address"
                     }
                     label={
                       openCoinActionModal.type === "send"
-                        ? "Sender Address"
+                        ? `${openCoinActionModal.coin === "QORT" ? 'Recipient Address or Name' : 'Recipient Address'}`
                         : "Receive Address"
                     }
                     variant="filled"
@@ -548,25 +578,171 @@ export const Header = ({ qortBalance, foreignCoinBalance }: any) => {
                   />
                 </FormControl>
               </CoinActionRow>
-              <CoinActionRow style={{gap: "10px"}}>
-                <CoinCancelBtn onClick={() => setOpenCoinActionModal(null)}>
-                  Cancel
-                </CoinCancelBtn>
-                <CoinConfirmSendBtn
-                  onClick={() => {
-                    setNotification({
-                      alertType: "alertInfo",
-                      msg: "Sending...",
-                    });
-                  }}
-                >
-                  {openCoinActionModal.type === "send" ? "Send" : "Receive"}
-                </CoinConfirmSendBtn>
-              </CoinActionRow>
+              {openCoinActionModal.type === "send" && (
+                 <CoinActionRow>
+                 <FormControl fullWidth>
+                   <CustomInputField
+                     style={{ flexGrow: 1 }}
+                     name="Amount"
+                     label="Amount"
+                     variant="filled"
+                     type="number"
+                     value={
+                       amount
+                     }
+                     required
+                     onChange={(e) => {
+                       setAmount(e.target.value)
+                     }}
+                   />
+                 </FormControl>
+               </CoinActionRow>
+              )}
+              </> : (
+                <>
+                <ReceiveCoin setOpen={setOpen} setInfo={setInfo} coinAddresses={coinAddresses} setCoinAddresses={setCoinAddresses} selectedCoin={openCoinActionModal.coin === "QORT" ? 'QORT' :getCoinLabel()} />
+                </>
+              )}
+              {openCoinActionModal.type === 'send' && (
+                 <CoinActionRow style={{gap: "10px"}}>
+                 {/* <CoinCancelBtn onClick={() => setOpenCoinActionModal(null)}>
+                   Cancel
+                 </CoinCancelBtn> */}
+                 <CoinConfirmSendBtn
+                   onClick={() => {
+                     if(openCoinActionModal.type === 'send'){
+                       sendCoin()
+                     }
+                     setNotification({
+                       alertType: "alertInfo",
+                       msg: "Sending...",
+                     });
+                   }}
+                 >
+                   {openCoinActionModal.type === "send" ? "Send" : "Receive"}
+                 </CoinConfirmSendBtn>
+               </CoinActionRow>
+              )}
+             
+             
+             
             </CoinActionContainer>
           </ReusableModal>
         )}
       </HeaderNav>
+
     </>
   );
 };
+
+export const AddressBox = styled(Box)`
+display: flex;
+border: 1px solid var(--50-white, rgba(255, 255, 255, 0.5));
+justify-content: space-between;
+align-items: center;
+width: auto;
+word-break: break-word;
+padding: 5px 15px 5px 15px;
+gap: 5px;
+border-radius: 100px;
+font-family: Inter;
+font-size: 12px;
+font-weight: 600;
+line-height: 14.52px;
+text-align: left;
+color: var(--50-white, rgba(255, 255, 255, 0.5));
+cursor: pointer;
+transition: all 0.2s;
+&:hover {
+    background-color: rgba(41, 41, 43, 1);
+    color: white;
+    svg path {
+      fill: white; // Fill color changes to white on hover
+    }
+  }
+
+`
+
+
+const ReceiveCoin = ({coinAddresses, setCoinAddresses, selectedCoin, setOpen, setInfo})=> {
+  const [errorMsg, setErrorMsg] = useState('')
+  const foreignAddress = useMemo(()=> {
+    return coinAddresses[selectedCoin] || null
+  }, [coinAddresses, selectedCoin])
+
+  const getForeignAddress = async (coin)=> {
+    try {
+      setOpen(true);
+    setInfo({
+      type: "info",
+      message: "Retrieving address...",
+    });
+      const response = await qortalRequest({
+        action: "GET_USER_WALLET",
+        coin
+    });
+    if(response?.address){
+      setCoinAddresses((prev)=> {
+        return {
+          ...prev,
+          [coin]: response.address
+        }
+      })
+    }
+    if(response?.error){
+      throw new Error(response?.error || "Failed to send coin.")
+    }
+    } catch (error) {
+      setErrorMsg(error?.message)
+    } finally {
+      setOpen(false);
+      setInfo(null);
+    }
+  }
+
+  useEffect(()=> {
+    if(!selectedCoin) return
+    if(!coinAddresses[selectedCoin]){
+      getForeignAddress(selectedCoin)
+    }
+  }, [selectedCoin, coinAddresses])
+
+  return (
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      <Typography sx={{
+        color: 'white'
+      }}>{`Send ${selectedCoin} to your address below`}</Typography>
+        <Spacer height="20px" />
+      {foreignAddress && (
+         <CopyToClipboard text={foreignAddress} onCopy={()=> {
+          setOpen(true);
+          setInfo({
+            type: "info",
+            message: "Address copied!",
+          });
+         }}>
+         <AddressBox>
+           {foreignAddress} <img src={Copy} />
+         </AddressBox>
+       </CopyToClipboard>
+      )}
+      {foreignAddress && (
+        <>
+        <AddressQRCode targetAddress={foreignAddress} />
+        </>
+      )}
+      {errorMsg && (
+        <>
+        <Spacer height="20px" />
+        <Typography sx={{
+          color: 'white'
+        }}>{errorMsg}</Typography>
+        </>
+      )}
+    </Box>
+  )
+}

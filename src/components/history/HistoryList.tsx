@@ -23,7 +23,6 @@ const defaultColDef = {
 
 export default function HistoryList({ qortAddress, historyList }) {
   const gridRef = useRef<any>(null);
-  console.log('historyList', historyList)
   const { getCoinLabel, selectedCoin} = useContext(gameContext)
   const [qortalNames, setQortalNames] = useState({});
 

@@ -41,8 +41,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { BuyContainer } from "./Table-styles";
 
-// export const baseLocalHost = window.location.host
-export const baseLocalHost = "127.0.0.1:12391";
+export const baseLocalHost = window.location.host
+// export const baseLocalHost = "127.0.0.1:12391";
 
 interface RowData {
   amountQORT: number;
@@ -795,7 +795,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
               width: "450px",
               height: "450px",
               maxHeight: "calc(90vh - 55px)",
-              maxWidth: "90vw",
+              maxWidth: "90%",
               background: "rgb(39, 40, 44)",
               overflow: "auto",
             }}
