@@ -34,7 +34,7 @@ export interface IContextProps {
    isUsingGateway: boolean;
    selectedCoin: string;
    setSelectedCoin: (val: any)=> void;
-   getCoinLabel: ()=> void;
+   getCoinLabel: ()=> string | null;
 }
 
 const defaultState: IContextProps = {

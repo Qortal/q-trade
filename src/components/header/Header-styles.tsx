@@ -216,6 +216,7 @@ export const CoinSelectRow = styled(Box)({
   flexDirection: "column",
   gap: "5px",
   alignSelf: "flex-start",
+  marginBottom: '5px'
 });
 
 export const CoinActionContainer = styled(Box)({

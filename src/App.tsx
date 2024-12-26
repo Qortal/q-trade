@@ -256,7 +256,7 @@ function App() {
     };
   }, [userInfo?.address]);
 
-  const getCoinLabel = (coin?: string)=> {
+  const getCoinLabel = (coin?: string)=>  {
     switch(coin || selectedCoin){
       case "LITECOIN":{
 
