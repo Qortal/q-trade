@@ -138,13 +138,14 @@ export const LogoColumn = styled(Box)({
   gap: "10px",
   alignItems: "center",
 });
+
 export const RightColumn = styled(Box)({
   display: "flex",
   flexDirection: "row",
   gap: "10px",
   alignItems: "flex-start",
-  padding: "10px",
 });
+
 export const AvatarCircle = styled("img")({
   borderRadius: "50%",
   width: "35px",
@@ -216,6 +217,7 @@ export const CoinSelectRow = styled(Box)({
   flexDirection: "column",
   gap: "5px",
   alignSelf: "flex-start",
+  marginBottom: "5px"
 });
 
 export const CoinActionContainer = styled(Box)({
@@ -314,7 +316,7 @@ export const CoinCancelBtn = styled(Button)({
   "&:hover": {
     border: "1px solid #d62525",
     backgroundColor: "#d62525",
-    color: "#000000"
+    color: "#000000",
   },
 });
 
