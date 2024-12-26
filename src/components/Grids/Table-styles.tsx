@@ -20,4 +20,5 @@ export const BuyContainer = styled(Box)({
   height: "100px",
   padding: "7px 14px",
   background: "#323336",
+  zIndex: 3
 });
