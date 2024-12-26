@@ -41,8 +41,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { BuyContainer } from "./Table-styles";
 
-// export const baseLocalHost = window.location.host
-export const baseLocalHost = "127.0.0.1:12391";
+export const baseLocalHost = window.location.host
+// export const baseLocalHost = "127.0.0.1:12391";
 
 interface RowData {
   amountQORT: number;
