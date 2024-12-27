@@ -58,17 +58,17 @@ export const HomePage = () => {
             <Tab activeTab={mode === "buy"} onClick={() => setMode("buy")}>
               Buy QORT
             </Tab>
-            <TabDivider activeTab={mode === "buy" || mode === "sell"} />
+            {/* <TabDivider activeTab={mode === "buy" || mode === "sell"} /> */}
             <Tab activeTab={mode === "sell"} onClick={() => setMode("sell")}>
               Sell QORT
             </Tab>
-            <TabDivider activeTab={mode === "sell" || mode === "history"} />
-            <Tab
+            {/* <TabDivider activeTab={mode === "sell" || mode === "history"} /> */}
+            {/* <Tab
               activeTab={mode === "history"}
               onClick={() => setMode("history")}
             >
               Trade History
-            </Tab>
+            </Tab> */}
           </TabsRow>
         </TabsContainer>
         <div

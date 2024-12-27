@@ -15,8 +15,6 @@ import {
 } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import axios from "axios";
-import { sendRequestToExtension } from "../../App";
 import {
   Alert,
   Box,
@@ -39,9 +37,15 @@ import { Hourglass } from "react-loader-spinner";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
-import { BuyContainer } from "./Table-styles";
+import {
+  BuyContainer,
+  BuyContainerDivider,
+  BuyOrderBtn,
+  ContentArea,
+  MainContainer,
+} from "./Table-styles";
 
-export const baseLocalHost = window.location.host
+export const baseLocalHost = window.location.host;
 // export const baseLocalHost = "127.0.0.1:12391";
 
 interface RowData {
@@ -110,23 +114,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<any>(null);
   const BuyButton = () => {
-    return (
-      <button
-        onClick={buyOrder}
-        style={{
-          borderRadius: "8px",
-          width: "74px",
-          height: "30px",
-          background: "#4D7345",
-          color: "white",
-          cursor: "pointer",
-          border: "1px solid #375232",
-          boxShadow: "0px 2.77px 2.21px 0px #00000005",
-        }}
-      >
-        BUY
-      </button>
-    );
+    return <BuyOrderBtn onClick={buyOrder}>BUY</BuyOrderBtn>;
   };
 
   const defaultColDef = {
@@ -499,13 +487,13 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
 
   const buyOrder = async () => {
     try {
-      if(+foreignCoinBalance < +selectedTotalLTC.toFixed(4)){
-        setOpen(true)
+      if (+foreignCoinBalance < +selectedTotalLTC.toFixed(4)) {
+        setOpen(true);
         setInfo({
-          type: 'error',
-          message: `You don't have enough ${getCoinLabel()} or your balance was not retrieved`
-        })
-        return
+          type: "error",
+          message: `You don't have enough ${getCoinLabel()} or your balance was not retrieved`,
+        });
+        return;
       }
 
       if (selectedOffers?.length < 1) return;
@@ -653,11 +641,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   };
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-      }}
-    >
+    <MainContainer>
       <div
         className="ag-theme-alpine-dark"
         style={{ height: 400, width: "100%" }}
@@ -685,48 +669,76 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
         <Button onClick={buyOrder}>Buy</Button>
 
       )} */}
-    </div>
-    <div style={{
-      height: '120px'
-    }} />
-    <BuyContainer>
-      <Box sx={{
-        display: 'flex',
-        gap: '5px',
-        flexDirection: 'column',
-        width: '100%'
-      }}>
-       <Typography sx={{
-          fontSize: '16px',
-          color: 'white',
-          width: 'calc(100% - 75px)'
-        }}>{selectedTotalQORT?.toFixed(3)} QORT</Typography> 
-        <Box sx={{
-        display: 'flex',
-        gap: '20px',
-        alignItems: 'center',
-        width: 'calc(100% - 75px)'
-      }}>
-         <Typography sx={{
-          fontSize: '16px',
-          color: selectedTotalLTC > foreignCoinBalance ? 'red' : 'white',
-        }}><span>{selectedTotalLTC?.toFixed(4)}</span> <span style={{
-          marginLeft: 'auto'
-        }}>{`${getCoinLabel()} `}</span></Typography>
-
-
+      </div>
+      <div
+        style={{
+          height: "120px",
+        }}
+      />
+      <BuyContainer>
+        <BuyContainerDivider />
+        <Box
+          sx={{
+            display: "flex",
+            gap: "5px",
+            flexDirection: "column",
+            width: "100%",
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: "16px",
+              color: "white",
+              width: "calc(100% - 75px)",
+            }}
+          >
+            {selectedTotalQORT?.toFixed(3)} QORT
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              gap: "20px",
+              alignItems: "center",
+              width: "calc(100% - 75px)",
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: "16px",
+                color: selectedTotalLTC > foreignCoinBalance ? "red" : "white",
+              }}
+            >
+              <span>{selectedTotalLTC?.toFixed(4)}</span>{" "}
+              <span
+                style={{
+                  marginLeft: "auto",
+                }}
+              >{`${getCoinLabel()} `}</span>
+            </Typography>
+          </Box>
+          <Typography
+            sx={{
+              fontSize: "16px",
+              color: "white",
+            }}
+          >
+            <span>{foreignCoinBalance?.toFixed(4)}</span>{" "}
+            <span
+              style={{
+                marginLeft: "auto",
+              }}
+            >
+              {`${getCoinLabel()} `} balance
+            </span>
+          </Typography>
         </Box>
-        <Typography sx={{
-          fontSize: '16px',
-          color: 'white',
-          
-        }}><span>{foreignCoinBalance?.toFixed(4)}</span> <span style={{
-          marginLeft: 'auto'
-        }}>{`${getCoinLabel()} `} balance</span></Typography>
-      </Box>
-      {BuyButton()}
-    </BuyContainer>
-    <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} open={open}  onClose={handleClose}>
+        {BuyButton()}
+      </BuyContainer>
+      <Snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        open={open}
+        onClose={handleClose}
+      >
         <Alert
           onClose={handleClose}
           severity={info?.type}
@@ -826,8 +838,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
                 </Typography>
                 <Spacer height="20px" />
                 <Typography>
-                  You can see the progress of your
-                  order in the "Pending" table.
+                  You can see the progress of your order in the "Pending" table.
                 </Typography>
                 <Spacer height="20px" />
                 <Typography>
@@ -859,29 +870,34 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
                 <Spacer height="20px" />
                 {isUsingGateway && (
                   <>
-                  <Typography>
-                  Using gateway: might take up to 3 minutes to submit the buy order.
-                </Typography>
-                <Spacer height="20px" />
-                <Box sx={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}>
-                <CountdownCircleTimer
-            isPlaying
-            duration={180}
-            colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
-            colorsTime={[7, 5, 2, 0]}
-            onComplete={() => {
-              //nothing
-            }}
-            size={60}
-            strokeWidth={4}
-          >
-            {({ remainingTime }) => <Typography>{remainingTime}</Typography>}
-          </CountdownCircleTimer>
-          </Box>
+                    <Typography>
+                      Using gateway: might take up to 3 minutes to submit the
+                      buy order.
+                    </Typography>
+                    <Spacer height="20px" />
+                    <Box
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <CountdownCircleTimer
+                        isPlaying
+                        duration={180}
+                        colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
+                        colorsTime={[7, 5, 2, 0]}
+                        onComplete={() => {
+                          //nothing
+                        }}
+                        size={60}
+                        strokeWidth={4}
+                      >
+                        {({ remainingTime }) => (
+                          <Typography>{remainingTime}</Typography>
+                        )}
+                      </CountdownCircleTimer>
+                    </Box>
                   </>
                 )}
               </Box>
@@ -905,6 +921,6 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
           </DialogActions>
         </Dialog>
       )}
-    </Box>
+    </MainContainer>
   );
 };

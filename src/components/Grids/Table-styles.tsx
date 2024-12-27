@@ -1,5 +1,12 @@
 import { Box, styled } from "@mui/system";
-import { Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
+
+export const MainContainer = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  width: "100%",
+  height: "100%",
+});
 
 export const TextTableTitle = styled(Typography)(({ theme }) => ({
   fontFamily: "Inter",
@@ -11,14 +18,39 @@ export const TextTableTitle = styled(Typography)(({ theme }) => ({
 }));
 
 export const BuyContainer = styled(Box)({
-  width: "calc(100% - 60px)",
+  position: "fixed",
+  width: "calc(100% - 14px)",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  position: "fixed",
   bottom: "0px",
   height: "100px",
-  padding: "7px 14px",
+  padding: "18px 14px 12px 14px",
   background: "#323336",
-  zIndex: 3
+  zIndex: 3,
 });
+
+export const BuyContainerDivider = styled(Box)({
+  position: "absolute",
+  width: "60%",
+  height: "1px",
+  background: "lightgray",
+  top: "10px",
+  left: "50%",
+  transform: "translateX(-50%)",
+});
+
+export const BuyOrderBtn = styled("button")(({ theme }) => ({
+  borderRadius: "8px",
+  width: "74px",
+  height: "30px",
+  background: "#4D7345",
+  color: "white",
+  cursor: "pointer",
+  border: "1px solid #375232",
+  boxShadow: "0px 2.77px 2.21px 0px #00000005",
+  marginRight: "10px",
+  [theme.breakpoints.down("sm")]: {
+    marginRight: "5px",
+  }
+}));

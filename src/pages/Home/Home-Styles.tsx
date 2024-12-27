@@ -69,7 +69,6 @@ export const HomeWrapper = styled(Box)({
 export const TabsContainer = styled(Box)({
   display: "flex",
   flexDirection: "column",
-  gap: "15px",
   alignItems: "flex-start",
   width: "100%",
   justifyContent: "center",
@@ -78,6 +77,7 @@ export const TabsContainer = styled(Box)({
 export const TabsRow = styled(Box)({
   display: "flex",
   flexDirection: "row",
+  gap: "5px",
   justifyContent: "space-evenly",
   alignItems: "center",
   backgroundColor: "#323336",
