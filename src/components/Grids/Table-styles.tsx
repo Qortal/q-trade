@@ -30,7 +30,7 @@ export const BuyContainer = styled(Box)({
   zIndex: 3,
 });
 
-export const BuyContainerDivider = styled(Box)({
+export const BuyContainerDivider = styled(Box)(({ theme }) => ({
   position: "absolute",
   width: "60%",
   height: "1px",
@@ -38,7 +38,10 @@ export const BuyContainerDivider = styled(Box)({
   top: "10px",
   left: "50%",
   transform: "translateX(-50%)",
-});
+  [theme.breakpoints.down("sm")]: {
+    top: "5px",
+  }
+}));
 
 export const BuyOrderBtn = styled("button")(({ theme }) => ({
   borderRadius: "8px",
@@ -51,6 +54,6 @@ export const BuyOrderBtn = styled("button")(({ theme }) => ({
   boxShadow: "0px 2.77px 2.21px 0px #00000005",
   marginRight: "10px",
   [theme.breakpoints.down("sm")]: {
-    marginRight: "5px",
+    marginRight: "0px",
   }
 }));
