@@ -17,7 +17,7 @@ export const TextTableTitle = styled(Typography)(({ theme }) => ({
   userSelect: "none",
 }));
 
-export const BuyContainer = styled(Box)({
+export const BuyContainer = styled(Box)(({ theme }) => ({
   position: "fixed",
   width: "calc(100% - 14px)",
   display: "flex",
@@ -28,7 +28,10 @@ export const BuyContainer = styled(Box)({
   padding: "18px 14px 12px 14px",
   background: "#323336",
   zIndex: 3,
-});
+  [theme.breakpoints.down("sm")]: {
+    width: "calc(100% - 2px)",
+  }
+}));
 
 export const BuyContainerDivider = styled(Box)(({ theme }) => ({
   position: "absolute",
