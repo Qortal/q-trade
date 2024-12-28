@@ -41,7 +41,6 @@ import {
   BuyContainer,
   BuyContainerDivider,
   BuyOrderBtn,
-  ContentArea,
   MainContainer,
 } from "./Table-styles";
 
