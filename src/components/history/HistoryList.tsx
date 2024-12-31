@@ -136,7 +136,7 @@ export default function HistoryList({ qortAddress, historyList }) {
       },
     ];
     
-  }, [selectedCoin, qortalNames])
+  }, [selectedCoin, qortalNames, getCoinLabel])
 
 
 

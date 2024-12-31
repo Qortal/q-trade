@@ -101,7 +101,7 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
         resizable: true,
       },
     ];
-  }, [selectedCoin]);
+  }, [selectedCoin, getCoinLabel]);
   useEffect(() => {
     if (qortAddress) {
       qortAddressRef.current = qortAddress;

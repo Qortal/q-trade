@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ReactGA from "react-ga4";
 import "./App.css";
 import socketService from "./services/socketService";
@@ -256,7 +256,7 @@ function App() {
     };
   }, [userInfo?.address]);
 
-  const getCoinLabel = (coin?: string)=>  {
+  const getCoinLabel = useCallback((coin?: string)=>  {
     switch(coin || selectedCoin){
       case "LITECOIN":{
 
@@ -285,7 +285,7 @@ function App() {
       default: 
       return null
     }
-  }
+  }, [selectedCoin])
 
   const gameContextValue: IContextProps = {
     userInfo,

@@ -218,7 +218,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
         },
       },
     ];
-  }, [qortalNames]);
+  }, [qortalNames, getCoinLabel]);
 
   // const onRowClicked = (event: any) => {
   //   if(listOfOngoingTradesAts.includes(event.data.qortalAtAddress)) return
