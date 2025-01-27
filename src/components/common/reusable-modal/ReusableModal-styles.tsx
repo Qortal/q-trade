@@ -1,5 +1,6 @@
 import { Box, Button } from "@mui/material";
 import { styled } from "@mui/system";
+import CloseIcon from '@mui/icons-material/Close';
 
 export const ReusableModalContainer = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -21,15 +22,6 @@ export const ReusableModalContainer = styled(Box)(({ theme }) => ({
     "0px 4px 5px 0px hsla(0,0%,0%,0.14), \n\t\t0px 1px 10px 0px hsla(0,0%,0%,0.12), \n\t\t0px 2px 4px -1px hsla(0,0%,0%,0.2)",
 }));
 
-export const ReusableModalSubContainer = styled(Box)({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "20px",
-  padding: "70px",
-});
-
 export const ReusableModalBackdrop = styled(Box)({
   position: "fixed",
   top: "0",
@@ -50,4 +42,17 @@ export const ReusableModalButton = styled(Button)(({ theme }) => ({
   border: `1px solid ${theme.palette.text.primary}`,
   color: theme.palette.text.primary,
   boxShadow: "1px 4px 10.5px 0px #0000004D"
+}));
+
+export const ReusableModalCloseIcon = styled(CloseIcon)(({ theme }) => ({
+  color: theme.palette.text.primary,
+  cursor: "pointer",
+  fontSize: "30px",
+  position: "absolute",
+  top: "20px",
+  right: "20px",
+  transition: "all 0.3s ease-in-out",
+  "&:hover": {
+    transform: "scale(1.1)",
+  },
 }));

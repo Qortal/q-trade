@@ -1,64 +1,9 @@
 import { Box, Button, Typography } from "@mui/material";
 import { styled } from "@mui/system";
 
-export const BubbleBoard = styled(Box)({
-  position: "relative",
-  display: "grid",
-  gridTemplateColumns: "repeat(9, 1fr)",
-  gridTemplateRows: "repeat(4, 1fr)",
-  gap: "15px",
-  width: "815px",
-  height: "353px",
-});
-
-export const BubbleCard = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "77px",
-  width: "77px",
-  background: "#ffffff05",
-  borderRadius: "50%",
-  fontFamily: "Fredoka One, sans-serif",
-  fontWeight: 500,
-  fontSize: "40px",
-  lineHeight: "48.4px",
-  textAlign: "center",
-  color: theme.palette.text.primary,
-}));
-
-
-export const BubbleCardColored1 = styled(Box)({
-  height: "77px",
-  width: "77px",
-  background: "linear-gradient(124.49deg, #70BAFF 7.03%, #F29999 94.22%)",
-  boxShadow: "0px 0px 25.8px -1px #1C5A93",
-  borderRadius: "50%",
-});
-
-export const BubbleCardColored2 = styled(Box)({
-  height: "77px",
-  width: "77px",
-  background: "linear-gradient(36.5deg, #70BAFF 19.69%, #F29999 90.73%)",
-  boxShadow: "0px 0px 25.8px -1px #1C5A93",
-  borderRadius: "50%",
-});
-
-export const BubbleCardColored3 = styled(Box)({
-  height: "77px",
-  width: "77px",
-  background: "linear-gradient(180deg, #70BAFF -24.68%, #ACABD0 25.49%, #F29999 74.03%)",
-  boxShadow: "0px 0px 25.8px -1px #1C5A93",
-  borderRadius: "50%",
-});
-
-export const BubbleCardColored4 = styled(Box)({
-  height: "77px",
-  width: "77px",
-  background: "linear-gradient(275.71deg, #70BAFF 35.99%, #F29999 95.61%)",
-  boxShadow: "0px 0px 25.8px -1px #1C5A93",
-  borderRadius: "50%",
-});
+type TabProp = {
+  activeTab: boolean;
+};
 
 export const MainCol = styled(Box)({
   display: "flex",
@@ -120,3 +65,53 @@ export const HomeWrapper = styled(Box)({
   height: "90vh",
   width: "100%",
 });
+
+export const TabsContainer = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  width: "100%",
+  justifyContent: "center",
+});
+
+export const TabsRow = styled(Box)({
+  display: "flex",
+  flexDirection: "row",
+  gap: "5px",
+  justifyContent: "space-evenly",
+  alignItems: "center",
+  backgroundColor: "#323336",
+  width: "fit-content",
+  borderRadius: "5px",
+  padding: "3px 0",
+});
+
+export const Tab = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "activeTab"
+})<TabProp>(({ theme, activeTab }) => ({
+  color: activeTab ? "#323336" : "#e8e8e8",
+  fontFamily: "Inter, sans-serif",
+  fontSize: "16px",
+  lineHeight: "19.2px",
+  fontWeight: 400,
+  backgroundColor: activeTab ? "#e8e8e8" : "transparent",
+  padding: "5px 10px",
+  borderRadius: "5px",
+  height: "auto",
+  transition: "all 0.4s ease-in-out",
+  userSelect: "none",
+  "&:hover": {
+    color: "#323336",
+    backgroundColor: "#babbbc",
+    cursor: activeTab ? "auto" : "pointer",
+  },
+}));
+
+export const TabDivider = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "activeTab"
+})<TabProp>(({ theme, activeTab }) => ({
+  width: "1px",
+  height: "25px",
+  margin: "0 3px",
+  backgroundColor: activeTab ? "transparent" : "#a4a4a5",
+}));
