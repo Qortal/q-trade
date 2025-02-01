@@ -63,12 +63,12 @@ export const HomePage = () => {
               Sell QORT
             </Tab>
             {/* <TabDivider activeTab={mode === "sell" || mode === "history"} /> */}
-            {/* <Tab
+            <Tab
               activeTab={mode === "history"}
               onClick={() => setMode("history")}
             >
               Trade History
-            </Tab> */}
+            </Tab>
           </TabsRow>
         </TabsContainer>
         <div
