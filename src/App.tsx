@@ -104,9 +104,9 @@ function App() {
   const getIsUsingGateway = async ()=> {
     try {
       const res = await qortalRequest({
-        action: "IS_USING_GATEWAY"
+        action: "IS_USING_PUBLIC_NODE"
       })
-      setIsUsingGateway(res.isGateway)
+      setIsUsingGateway(res)
     } catch (error) {
       
     }
