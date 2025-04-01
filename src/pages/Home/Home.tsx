@@ -112,7 +112,7 @@ export const HomePage = () => {
         </div>
 
         <CreateSell show={mode === "sell"} qortAddress={userInfo?.address} />
-        <History show={mode === "history"} qortAddress={userInfo?.address} />
+        <History show={mode === "history"} qortAddress={userInfo?.address} userPublicKey={userInfo?.publicKey} />
       </AppContainer>
     </>
   );

@@ -15,10 +15,11 @@ import gameContext from "../../contexts/gameContext";
 import HistoryList from "./HistoryList";
 import { ShowingFont, Refresh, HistoryButtonRow, HistoryButton } from "./History-styles";
 
-export const History = ({ qortAddress, show }) => {
+export const History = ({ qortAddress, show, userPublicKey }) => {
+
   const [buyHistory, setBuyHistory] = useState({});
   const [sellHistory, setSellHistory] = useState({});
-
+  const [allHistory, setAllHistory] = useState({});
   const { selectedCoin } = useContext(gameContext);
   const [mode, setMode] = useState("buyHistory");
   const [open, setOpen] = useState(false);
@@ -26,18 +27,21 @@ export const History = ({ qortAddress, show }) => {
   const selectedHistory = useMemo(() => {
     if (mode === "buyHistory") return buyHistory[selectedCoin] || [];
     if (mode === "sellHistory") return sellHistory[selectedCoin] || [];
-  }, [selectedCoin, buyHistory, sellHistory, mode]);
+    if (mode === "allHistory") return allHistory[selectedCoin] || [];
+  }, [selectedCoin, buyHistory, sellHistory, mode, allHistory]);
   const getBuyHistory = useCallback(
-    (address, foreignBlockchain, mode, limit = 20) => {
+    (publicKey, foreignBlockchain, mode, limit = 20) => {
       setOpen(true);
       let historyUrl;
       if (mode === "buyHistory") {
-        historyUrl = `/crosschain/trades?foreignBlockchain=${foreignBlockchain}&buyerAddress=${address}&limit=${limit}&reverse=true`;
+        historyUrl = `/crosschain/trades?foreignBlockchain=${foreignBlockchain}&buyerPublicKey=${publicKey}&limit=${limit}&reverse=true`;
       }
       if (mode === "sellHistory") {
-        historyUrl = `/crosschain/trades?foreignBlockchain=${foreignBlockchain}&sellerAddress=${address}&limit=${limit}&reverse=true`;
+        historyUrl = `/crosschain/trades?foreignBlockchain=${foreignBlockchain}&sellerPublicKey=${publicKey}&limit=${limit}&reverse=true`;
       }
-
+      if(mode === 'allHistory'){
+        historyUrl = `/crosschain/trades?foreignBlockchain=${foreignBlockchain}&limit=${limit}&reverse=true`;
+      }
       fetch(historyUrl)
         .then((response) => {
           return response.json();
@@ -59,6 +63,14 @@ export const History = ({ qortAddress, show }) => {
               };
             });
           }
+          if (mode === "allHistory") {
+            setAllHistory((prev) => {
+              return {
+                ...prev,
+                [foreignBlockchain]: data,
+              };
+            });
+          }
         })
         .catch(() => {})
         .finally(() => {
@@ -69,12 +81,12 @@ export const History = ({ qortAddress, show }) => {
   );
 
   useEffect(() => {
-    if (!qortAddress || !selectedCoin) return;
+    if (!userPublicKey || !selectedCoin) return;
     if (mode === "buyHistory" && buyHistory[selectedCoin]) return;
     if (mode === "sellHistory" && sellHistory[selectedCoin]) return;
-
-    getBuyHistory(qortAddress, selectedCoin, mode);
-  }, [qortAddress, selectedCoin, buyHistory, mode]);
+    if (mode === "allHistory" && allHistory[selectedCoin]) return;
+    getBuyHistory(userPublicKey, selectedCoin, mode);
+  }, [userPublicKey, selectedCoin, buyHistory, mode, sellHistory, allHistory]);
 
   return (
     <Box
@@ -83,14 +95,16 @@ export const History = ({ qortAddress, show }) => {
         display: show ? "block" : "none",
       }}
     >
-      <HistoryButtonRow>
+      <HistoryButtonRow sx={{
+        flexWrap: 'wrap'
+      }}>
         <HistoryButton
           activeBtn={mode === "buyHistory"}
           onClick={() => {
             setMode("buyHistory");
           }}
         >
-          Buy History
+          My Buy History
         </HistoryButton>
         <HistoryButton
           activeBtn={mode === "sellHistory"}
@@ -98,11 +112,19 @@ export const History = ({ qortAddress, show }) => {
             setMode("sellHistory");
           }}
         >
-          Sell History
+          My Sell History
+        </HistoryButton>
+        <HistoryButton
+          activeBtn={mode === "allHistory"}
+          onClick={() => {
+            setMode("allHistory");
+          }}
+        >
+          Historic Trades
         </HistoryButton>
         <ButtonBase
           onClick={() => {
-            getBuyHistory(qortAddress, selectedCoin, mode);
+            getBuyHistory(userPublicKey, selectedCoin, mode);
           }}
         >
           <Refresh />
