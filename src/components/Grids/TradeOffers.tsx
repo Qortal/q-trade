@@ -15,17 +15,21 @@ import {
 } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
+import InfoOutlineIcon from '@mui/icons-material/InfoOutline';
 import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Snackbar,
   SnackbarCloseReason,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import gameContext from "../../contexts/gameContext";
@@ -46,6 +50,15 @@ import {
 
 export const baseLocalHost = window.location.host;
 // export const baseLocalHost = "127.0.0.1:12391";
+
+
+import CloseIcon from "@mui/icons-material/Close";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import moment from "moment";
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+};
 
 interface RowData {
   amountQORT: number;
@@ -109,7 +122,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   const offeringTrades = useRef<any[]>([]);
   const blockedTradesList = useRef([]);
   const gridRef = useRef<any>(null);
-
+  const [openShowOfferDetails, setOpenShowOfferDetails] = useState(null)
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<any>(null);
   const BuyButton = () => {
@@ -163,15 +176,25 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
     }
   };
 
+
+
   const columnDefs: ColDef[] = useMemo(() => {
     return [
       {
         headerCheckboxSelection: true, // Adds a checkbox in the header for selecting all rows
-        checkboxSelection: true, // Adds checkboxes in each row for selection
+        // checkboxSelection: true, // Adds checkboxes in each row for selection
+        checkboxSelection: true, // disable default, we're rendering it manually
         headerName: "", // You can customize the header name
-        width: 50, // Adjust the width as needed
+        width: 100, // Adjust the width as needed
         pinned: "left", // Optional, to pin this column on the left
         resizable: false,
+        suppressRowClickSelection: true,
+        
+        cellRenderer: (params) =>
+          <SelectWithInfoCell {...params}  selectTradeForDetails={()=> {
+            setOpenShowOfferDetails(params?.node?.data)
+          }} />,
+  // suppressRowClickSelection: true, // prevent whole row selection on click
       },
       {
         headerName: "QORT AMOUNT",
@@ -920,6 +943,143 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
           </DialogActions>
         </Dialog>
       )}
+       <Dialog
+          open={!!openShowOfferDetails}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+          PaperProps={{
+            style: {
+              backgroundColor: "rgb(39, 40, 44)",
+              background: "rgb(39, 40, 44)",
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              maxHeight: "calc(90vh - 55px)",
+              maxWidth: "90%",
+              background: "rgb(39, 40, 44)",
+              overflow: "auto",
+            }}
+          >
+            <Typography variant="subtitle1">
+          Buy {openShowOfferDetails?.qortAmount} QORT @ {openShowOfferDetails?.foreignAmount} {getCoinLabel()}
+        </Typography>
+       
+          </DialogTitle>
+          <IconButton
+          aria-label="close"
+          onClick={()=> setOpenShowOfferDetails(null)}
+          sx={{ position: "absolute", right: 8, top: 8, color: "#fff" }}
+        >
+          <CloseIcon />
+        </IconButton>
+          <DialogContent dividers sx={{ borderColor: "#333" }}>
+        <TradeRow enableSlice enableCopy label="Seller" value={openShowOfferDetails?.qortalCreator} extra={qortalNames[openShowOfferDetails?.qortalCreator]} />
+        <TradeRow label="Amount" value={`${openShowOfferDetails?.qortAmount} QORT`} />
+        <TradeRow label="Total" value={`${openShowOfferDetails?.foreignAmount} ${getCoinLabel()}`} />
+        <TradeRow label="Price" value={`${+openShowOfferDetails?.foreignAmount / +openShowOfferDetails?.qortAmount } ${getCoinLabel()}/QORT`} />
+        <TradeRow enableSlice enableCopy label="AT Address" value={openShowOfferDetails?.qortalAtAddress} />
+      </DialogContent>
+          <DialogActions
+            sx={{
+              background: "rgb(39, 40, 44)",
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setOpenShowOfferDetails(null)
+              }}
+              autoFocus
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
     </MainContainer>
+  );
+};
+
+const TradeRow = ({
+  label,
+  value,
+  extra,
+  enableSlice,
+  enableCopy
+}: {
+  label: string;
+  value: string;
+  extra?: string;
+  enableSlice?: boolean
+  enableCopy?: boolean
+}) => (
+  <Box
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      mb: 2,
+    }}
+  >
+    <Typography variant="caption" color="gray">
+      {label}
+    </Typography>
+
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        flexWrap: "wrap",
+      }}
+    >
+      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+        {enableSlice && value?.length > 18 ? value?.slice(0, 6) + "..." + value.slice(-4) : value}
+      </Typography>
+      {enableCopy && (
+          <Tooltip title="Copy">
+          <IconButton size="small" onClick={() => copyToClipboard(value)}>
+            <ContentCopyIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {extra && (
+        <Typography variant="body2" color="gray">
+          {extra}
+        </Typography>
+      )}
+    </Box>
+  </Box>
+);
+
+
+const SelectWithInfoCell = ({selectTradeForDetails}) => {
+
+  const handleInfoClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevents row selection
+    selectTradeForDetails()
+    // alert(`Info for ${data.qortalAtAddress}`); // Replace with your own UI
+  };
+
+ 
+
+  return (
+    <div className="ag-cell-ignore-selection" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+     
+    
+        <IconButton
+          size="small"
+          onClick={handleInfoClick}
+          onClickCapture={(e) => {
+            e.stopPropagation();
+            handleInfoClick(e)
+        }}
+          onMouseDown={(e) => e.stopPropagation()} // 👈 this is key
+          sx={{ minWidth: 0, padding: "0 4px" }}
+        >
+         <InfoOutlineIcon />
+        </IconButton>
+
+    </div>
   );
 };

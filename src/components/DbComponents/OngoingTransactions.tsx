@@ -23,7 +23,7 @@ export const useGetOngoingTransactions = ({ qortAddress }) => {
     try {
       const transactionStore = db.transaction("transactions", "readonly").objectStore("transactions");
       const index = transactionStore.index("updatedAt");
-      const now = Date.now() - 120 * 60 * 1000; // 22 minutes ago
+      const now = Date.now() - 1440 * 60 * 1000; // 1 day
 
       const results: any[] = await new Promise((resolve, reject) => {
         const data = [];
