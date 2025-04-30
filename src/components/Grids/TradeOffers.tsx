@@ -468,6 +468,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   };
 
   useEffect(() => {
+    if(isUsingGateway === null) return
     blockedTradesList.current = JSON.parse(
       localStorage.getItem("failedTrades") || "[]"
     );
@@ -489,6 +490,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   }, [isUsingGateway]);
 
   useEffect(() => {
+    if(isUsingGateway === null) return
     if (selectedCoin === null) return;
     restartTradeOffers();
     setTimeout(() => {

@@ -81,7 +81,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [OAuthLoading, setOAuthLoading] = useState<boolean>(false);
   const db = useIndexedDBContext();
-  const [isUsingGateway, setIsUsingGateway] = useState(true)
+  const [isUsingGateway, setIsUsingGateway] = useState(null)
 
   const [isSocketUp, setIsSocketUp] = useState<boolean>(false);
   // const [onGoingTrades, setOngoingTrades] = useState([])
