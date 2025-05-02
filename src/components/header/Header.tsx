@@ -512,7 +512,6 @@ export const Header = ({
         setFee={setFee} />
               <UnsignedFees
                 qortAddress={qortAddress}
-                selectedCoin={selectedCoin}
               />
             </>
           )}

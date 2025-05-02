@@ -63,7 +63,9 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
     setInfo(null);
   };
   const coin = useMemo(() => {
-    return getCoinLabel(selectedCoin)?.toLowerCase();
+    const coinLabel = getCoinLabel(selectedCoin)
+    if(typeof coinLabel !== 'string') return
+    return coinLabel?.toLowerCase();
   }, [selectedCoin, getCoinLabel]);
 
   const establishUpdateFeeForm = useCallback(async (coin) => {
@@ -111,7 +113,9 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
 
   const recommendedFeeDisplay = useMemo(() => {
     if (!selectedCoin || !recommendedFeeData) return null;
-    const coin = getCoinLabel(selectedCoin)?.toUpperCase();
+    const coinLabel = getCoinLabel(selectedCoin)
+    if(typeof coinLabel !== 'string') return
+    const coin = coinLabel?.toUpperCase();
     if(!recommendedFeeData[coin]) return null
     return recommendedFeeData[coin][recommendedFee];
   }, [recommendedFeeData, recommendedFee, selectedCoin]);
