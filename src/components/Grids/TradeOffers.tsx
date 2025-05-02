@@ -608,14 +608,14 @@ export const TradeOffers: React.FC<any> = ({
   const buyOrder = async () => {
     try {
 
-      // if (+foreignCoinBalance < +selectedTotalLTC.toFixed(4)) {
-      //   setOpen(true);
-      //   setInfo({
-      //     type: "error",
-      //     message: `You don't have enough ${getCoinLabel()} or your balance was not retrieved`,
-      //   });
-      //   return;
-      // }
+      if (+foreignCoinBalance < +selectedTotalLTC.toFixed(8)) {
+        setOpen(true);
+        setInfo({
+          type: "error",
+          message: `You don't have enough ${getCoinLabel()} or your balance was not retrieved`,
+        });
+        return;
+      }
 
       if (selectedOffers?.length < 1) return;
       let offersWithKnownFees = [];
