@@ -824,7 +824,8 @@ export const TradeOffers: React.FC<any> = ({
       gridRef.current.api.refreshCells({ force: true });
     }
   }, [signedUnlockingFees, fee]);
-  if (!signedUnlockingFees || (!fee && selectedCoin !== "PIRATECHAIN"))
+
+  if (!signedUnlockingFees || ((fee === undefined || fee === null) && selectedCoin !== "PIRATECHAIN"))
     return null;
 
   return (

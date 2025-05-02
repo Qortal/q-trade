@@ -86,7 +86,8 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
         },
         1800000
       );
-      if (response && !isNaN(+response)) {
+      console.log('response', response)
+      if ((response !== null && response !== undefined) && !isNaN(+response)) {
         setFee(response);
       }
 
@@ -119,6 +120,17 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
     if(!recommendedFeeData[coin]) return null
     return recommendedFeeData[coin][recommendedFee];
   }, [recommendedFeeData, recommendedFee, selectedCoin]);
+
+  const hideRecommendations = useMemo(()=> {
+    if(selectedCoin === 'LITECOIN' || selectedCoin === 'BITCOIN' || selectedCoin === 'DOGECOIN') return false
+    return true
+  }, [selectedCoin])
+
+  useEffect(()=> {
+    if(hideRecommendations){
+        setRecommendedFee('custom')
+    }
+  }, [hideRecommendations])
 
   const updateFee = async () => {
     const typeRequest = "feerequired";
@@ -183,7 +195,9 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
     getLatestFees();
   }, [getLatestFees]);
 
-  if (!fee) return;
+  console.log('fee', fee)
+
+  if (fee === null || fee === undefined) return;
   return (
     <>
       <ButtonBase
@@ -249,7 +263,7 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
                     alignItems: 'center'
                 }}>
                   <CustomLabel htmlFor="standard-adornment-name">
-                    Recommended fee selection
+                    Recommended fee selection ( in sats)
                   </CustomLabel>
            
                   <Spacer height="10px" />
@@ -260,9 +274,14 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
                     onChange={handleChange}
                     aria-label="Platform"
                   >
-                    <ToggleButton value="l">Low</ToggleButton>
+                    {!hideRecommendations && (
+                        <>
+                         <ToggleButton value="l">Low</ToggleButton>
                     <ToggleButton value="m">Medium</ToggleButton>
                     <ToggleButton value="h">High</ToggleButton>
+                        </>
+                    )}
+                   
                     <ToggleButton value="custom">Custom</ToggleButton>
                   </ToggleButtonGroup>
                   </Box>
