@@ -23,8 +23,8 @@ import TradeBotList from "./TradeBotList";
 export const CustomLabel = styled(InputLabel)`
   font-weight: 400;
   font-family: Inter;
-  font-size: 10px;
-  line-height: 12px;
+  font-size: 14px;
+  line-height: 1.2;
   color: rgba(255, 255, 255, 0.5);
 `;
 
@@ -61,12 +61,12 @@ export const CustomInput = styled(TextField)({
   // backgroundColor: "rgba(30, 30, 32, 1)",
   outline: "none",
   input: {
-    fontSize: 10,
+    fontSize: '14px',
     fontFamily: "Inter",
     fontWeight: 400,
     color: "white",
     "&::placeholder": {
-      fontSize: 16,
+      fontSize: '14px',
       color: "rgba(255, 255, 255, 0.2)",
     },
     outline: "none",
@@ -263,7 +263,7 @@ export const CreateSell = ({ qortAddress, show }) => {
               onChange={(e) => setQortAmount(+e.target.value)}
               autoComplete="off"
             />
-            <Spacer height="6px" />
+            <Spacer height="15px" />
             <CustomLabel htmlFor="standard-adornment-amount">
               {`Price of Each QORT (in ${getCoinLabel()})`}
             </CustomLabel>
@@ -275,7 +275,7 @@ export const CreateSell = ({ qortAddress, show }) => {
               onChange={(e) => setForeignAmount(+e.target.value)}
               autoComplete="off"
             />
-            <Spacer height="6px" />
+            <Spacer height="15px" />
             <Typography>
               {`${qortAmount * foreignAmount} ${getCoinLabel()}`} for{" "}
               {qortAmount} QORT

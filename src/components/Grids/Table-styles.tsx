@@ -24,7 +24,6 @@ export const BuyContainer = styled(Box)(({ theme }) => ({
   justifyContent: "space-between",
   alignItems: "center",
   bottom: "0px",
-  height: "100px",
   padding: "18px 14px 12px 14px",
   background: "#323336",
   zIndex: 3,

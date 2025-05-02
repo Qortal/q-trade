@@ -10,12 +10,13 @@ import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
   RowClassParams,
+  RowNode,
   RowStyle,
   SizeColumnsToContentStrategy,
 } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import InfoOutlineIcon from '@mui/icons-material/InfoOutline';
+import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 import {
   Alert,
   Box,
@@ -26,6 +27,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControlLabel,
   IconButton,
   Snackbar,
   SnackbarCloseReason,
@@ -48,9 +50,8 @@ import {
   MainContainer,
 } from "./Table-styles";
 
-export const baseLocalHost = window.location.host;
-// export const baseLocalHost = "127.0.0.1:12391";
-
+// export const baseLocalHost = window.location.host;
+export const baseLocalHost = "devnet-nodes.qortal.link:11111";
 
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -79,8 +80,12 @@ export const autoSizeStrategy: SizeColumnsToContentStrategy = {
   type: "fitCellContents",
 };
 
-export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
+export const TradeOffers: React.FC<any> = ({
+  foreignCoinBalance,
+  fee,
+}: any) => {
   const [offers, setOffers] = useState<any[]>([]);
+  const [signedUnlockingFees, setSignedUnlockingFees] = useState(null);
   const [qortalNames, setQortalNames] = useState({});
   const {
     fetchOngoingTransactions,
@@ -90,6 +95,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
     getCoinLabel,
     selectedCoin,
   } = useContext(gameContext);
+  const isRemoveOrdersWithoutUnlockingFees = useRef(false);
   const listOfOngoingTradesAts = useMemo(() => {
     return (
       onGoingTrades
@@ -103,6 +109,14 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
     onOk: onOkInfo,
     show: showInfo,
     message: messageInfo,
+  } = useModal();
+
+  const {
+    isShow: isShowTradesUnknownFee,
+    onCancel: onCancelTradesUnknownFee,
+    onOk: onOkTradesUnknownFee,
+    show: showTradesUnknownFee,
+    message: messageTradesUnknownFee,
   } = useModal();
 
   const offersWithoutOngoing = useMemo(() => {
@@ -122,12 +136,38 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   const offeringTrades = useRef<any[]>([]);
   const blockedTradesList = useRef([]);
   const gridRef = useRef<any>(null);
-  const [openShowOfferDetails, setOpenShowOfferDetails] = useState(null)
+  const [openShowOfferDetails, setOpenShowOfferDetails] = useState(null);
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<any>(null);
   const BuyButton = () => {
     return <BuyOrderBtn onClick={buyOrder}>BUY</BuyOrderBtn>;
   };
+
+  const intervalGetSignedUnlockingFees = useRef<number | null>(null);
+
+  const signedUnlockingFeesRef = useRef(signedUnlockingFees);
+  const feeRef = useRef(fee);
+
+  const knownFees = useMemo(() => {
+    const offersWithKnownFees = [];
+
+    selectedOffers.forEach((offer) => {
+      const feeEntry = signedUnlockingFees.find(
+        (item) => item?.atAddress === offer.qortalAtAddress
+      );
+
+      if (feeEntry && typeof feeEntry.fee === "number") {
+        offersWithKnownFees.push({ ...offer, fee: feeEntry.fee });
+      }
+    });
+    const totalKnownFees = offersWithKnownFees.reduce((sum, offer) => {
+      return sum + (offer.fee || 0);
+    }, 0);
+    const feeInLtc = totalKnownFees / 1e8;
+    return +feeInLtc.toFixed(8);
+  }, [selectedOffers, signedUnlockingFees]);
+
+  console.log("knownFees", knownFees);
 
   const defaultColDef = {
     resizable: true, // Make columns resizable by default
@@ -176,8 +216,6 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
     }
   };
 
-
-
   const columnDefs: ColDef[] = useMemo(() => {
     return [
       {
@@ -189,12 +227,25 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
         pinned: "left", // Optional, to pin this column on the left
         resizable: false,
         suppressRowClickSelection: true,
-        
-        cellRenderer: (params) =>
-          <SelectWithInfoCell {...params}  selectTradeForDetails={()=> {
-            setOpenShowOfferDetails(params?.node?.data)
-          }} />,
-  // suppressRowClickSelection: true, // prevent whole row selection on click
+
+        cellRenderer: (params) => (
+          <SelectWithInfoCell
+            {...params}
+            selectTradeForDetails={() => {
+              const hasSignedFee = signedUnlockingFees?.find(
+                (item) =>
+                  item?.atAddress === params?.node?.data?.qortalAtAddress
+              );
+              let fee = null;
+              if (hasSignedFee) {
+                fee = hasSignedFee.fee;
+              }
+
+              setOpenShowOfferDetails({ ...(params?.node?.data || {}), fee });
+            }}
+          />
+        ),
+        // suppressRowClickSelection: true, // prevent whole row selection on click
       },
       {
         headerName: "QORT AMOUNT",
@@ -221,6 +272,22 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
         resizable: true,
       },
       {
+        headerName: `Unlocking fee`,
+        flex: 1, // Flex makes this column responsive
+        minWidth: 150, // Ensure it doesn't shrink too much
+        resizable: true,
+        valueGetter: (params) => {
+          if (params?.data?.qortalAtAddress) {
+            console.log("22signedUnlockingFees", signedUnlockingFees);
+            const hasSignedFee = signedUnlockingFees?.find(
+              (item) => item?.atAddress === params.data.qortalAtAddress
+            );
+            if (!hasSignedFee) return "Unknown";
+            return hasSignedFee.fee;
+          } else return "Unknown";
+        },
+      },
+      {
         headerName: "Seller",
         field: "qortalCreator",
         flex: 1, // Flex makes this column responsive
@@ -241,7 +308,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
         },
       },
     ];
-  }, [qortalNames, getCoinLabel]);
+  }, [qortalNames, getCoinLabel, signedUnlockingFees]);
 
   // const onRowClicked = (event: any) => {
   //   if(listOfOngoingTradesAts.includes(event.data.qortalAtAddress)) return
@@ -256,7 +323,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
 
   const getNewBlockedTrades = async () => {
     const unconfirmedTransactionsList = async () => {
-      const unconfirmedTransactionslUrl = `/transactions/unconfirmed?txType=MESSAGE&limit=0&reverse=true`;
+      const unconfirmedTransactionslUrl = `http://devnet-nodes.qortal.link:11112/transactions/unconfirmed?txType=MESSAGE&limit=0&reverse=true`;
 
       var addBlockedTrades = JSON.parse(
         localStorage.getItem("failedTrades") || "[]"
@@ -468,7 +535,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   };
 
   useEffect(() => {
-    if(isUsingGateway === null) return
+    if (isUsingGateway === null) return;
     blockedTradesList.current = JSON.parse(
       localStorage.getItem("failedTrades") || "[]"
     );
@@ -489,8 +556,36 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
     };
   }, [isUsingGateway]);
 
+  const getSignedUnlockingFees = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `http://devnet-nodes.qortal.link:11112/crosschain/signedfees`
+      );
+      const data = await response.json();
+      if (data && Array.isArray(data)) {
+        setSignedUnlockingFees(data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  console.log("signed", signedUnlockingFees);
+
   useEffect(() => {
-    if(isUsingGateway === null) return
+    getSignedUnlockingFees();
+    intervalGetSignedUnlockingFees.current = setInterval(() => {
+      getSignedUnlockingFees();
+    }, 150000);
+    return () => {
+      if (intervalGetSignedUnlockingFees.current) {
+        clearInterval(intervalGetSignedUnlockingFees.current);
+      }
+    };
+  }, [getSignedUnlockingFees]);
+
+  useEffect(() => {
+    if (isUsingGateway === null) return;
     if (selectedCoin === null) return;
     restartTradeOffers();
     setTimeout(() => {
@@ -504,13 +599,17 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   }, [isUsingGateway, selectedCoin]);
 
   const selectedTotalLTC = useMemo(() => {
-    return selectedOffers.reduce((acc: number, curr: any) => {
+    const total = selectedOffers.reduce((acc: number, curr: any) => {
       return acc + (+curr.foreignAmount || 0); // Ensure qortAmount is defined
     }, 0);
-  }, [selectedOffers]);
+
+    const totalWithKnownFees = +total + +knownFees;
+    return totalWithKnownFees;
+  }, [selectedOffers, knownFees]);
 
   const buyOrder = async () => {
     try {
+      isRemoveOrdersWithoutUnlockingFees.current = false;
       if (+foreignCoinBalance < +selectedTotalLTC.toFixed(4)) {
         setOpen(true);
         setInfo({
@@ -521,6 +620,36 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
       }
 
       if (selectedOffers?.length < 1) return;
+      let offersWithKnownFees = [];
+      const offersWithUnknownFees = [];
+
+      selectedOffers.forEach((offer) => {
+        const feeEntry = signedUnlockingFees.find(
+          (item) => item?.atAddress === offer.qortalAtAddress
+        );
+
+        if (feeEntry && typeof feeEntry.fee === "number") {
+          offersWithKnownFees.push({ ...offer, fee: feeEntry.fee });
+        } else {
+          offersWithUnknownFees.push(offer);
+        }
+      });
+      console.log("offersWithKnownFees", offersWithKnownFees);
+      console.log("offersWithUnknownFees", offersWithUnknownFees);
+      if (offersWithUnknownFees?.length > 0) {
+        await showTradesUnknownFee({
+          message: "",
+        });
+
+        if (!isRemoveOrdersWithoutUnlockingFees.current) {
+          offersWithKnownFees = [
+            ...offersWithKnownFees,
+            ...offersWithUnknownFees,
+          ];
+        }
+      }
+
+      console.log("offersWithKnownFees", offersWithKnownFees);
 
       setIsShowBuyInProgress({ status: "buying" });
 
@@ -529,7 +658,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
       //   type: 'info',
       //   message: "Attempting to submit buy order. Please wait..."
       // })
-      const listOfATs = selectedOffers;
+      const listOfATs = offersWithKnownFees;
       const response = await qortalRequestWithTimeout(
         {
           action: "CREATE_TRADE_BUY_ORDER",
@@ -609,6 +738,18 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
     if (params.data.qortalAtAddress === selectedOffer?.qortalAtAddress) {
       return { background: "#6D94F533" };
     }
+
+    const hasSignedFee = signedUnlockingFees?.find(
+      (item) => item?.atAddress === params.data.qortalAtAddress
+    );
+    console.log("hasSignedFee", hasSignedFee);
+    if (hasSignedFee) {
+      console.log("fee2fee", fee);
+      if (fee && hasSignedFee?.fee > fee) {
+        return { backgroundColor: "#ff6347" };
+      }
+    }
+
     return undefined;
   };
   // const onGridReady = (params) => {
@@ -639,9 +780,10 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
   }, []);
 
   const selectedTotalQORT = useMemo(() => {
-    return selectedOffers.reduce((acc: number, curr: any) => {
+    const total = selectedOffers.reduce((acc: number, curr: any) => {
       return acc + (+curr.qortAmount || 0); // Ensure qortAmount is defined
     }, 0);
+    return total;
   }, [selectedOffers]);
 
   const onGridReady = useCallback((params: any) => {
@@ -663,6 +805,32 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
     setOpen(false);
     setInfo(null);
   };
+
+  useEffect(() => {
+    signedUnlockingFeesRef.current = signedUnlockingFees;
+    feeRef.current = fee;
+
+    if (gridRef.current?.api) {
+      console.log("Total rows:", gridRef.current.api.getDisplayedRowCount());
+
+      gridRef.current.api.forEachNode((rowNode: RowNode) => {
+        const qortalAtAddress = rowNode.data?.qortalAtAddress;
+        const hasSignedFee = signedUnlockingFeesRef.current?.find(
+          (item) => item?.atAddress === qortalAtAddress
+        );
+
+        const isSelectable =
+          !hasSignedFee || hasSignedFee.fee <= feeRef.current;
+
+        rowNode.setRowSelectable(isSelectable); // ✅ apply logic per row
+      });
+
+      // Optional: refresh selection/checkbox visuals
+      gridRef.current.api.refreshCells({ force: true });
+    }
+  }, [signedUnlockingFees, fee]);
+  console.log("signedUnlockingFees", signedUnlockingFees, fee);
+  if (!signedUnlockingFees || !fee) return null;
 
   return (
     <MainContainer>
@@ -688,6 +856,23 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
           onGridReady={onGridReady}
           //  domLayout='autoHeight'
           getRowId={(params) => params.data.qortalAtAddress} // Ensure rows have unique IDs
+          gridOptions={{
+            isRowSelectable: (params) => {
+              let selectable = true;
+              const hasSignedFee = signedUnlockingFeesRef.current?.find(
+                (item) => item?.atAddress === params.data.qortalAtAddress
+              );
+              if (!hasSignedFee) selectable = true;
+              console.log(
+                "fee",
+                feeRef.current,
+                signedUnlockingFeesRef.current
+              );
+              if (hasSignedFee && hasSignedFee?.fee > feeRef.current)
+                selectable = false;
+              return selectable;
+            },
+          }}
         />
         {/* {selectedOffer && (
         <Button onClick={buyOrder}>Buy</Button>
@@ -696,7 +881,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
       </div>
       <div
         style={{
-          height: "120px",
+          height: "150px",
         }}
       />
       <BuyContainer>
@@ -716,7 +901,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
               width: "calc(100% - 75px)",
             }}
           >
-            {selectedTotalQORT?.toFixed(3)} QORT
+            {selectedTotalQORT?.toFixed(8)} QORT
           </Typography>
           <Box
             sx={{
@@ -729,15 +914,17 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
             <Typography
               sx={{
                 fontSize: "16px",
-                color: selectedTotalLTC > foreignCoinBalance ? "red" : "white",
+                backgroundColor:
+                  selectedTotalLTC > foreignCoinBalance ? "red" : "unset",
+                color: "white",
               }}
             >
-              <span>{selectedTotalLTC?.toFixed(4)}</span>{" "}
+              <span>{selectedTotalLTC?.toFixed(8)}</span>{" "}
               <span
                 style={{
                   marginLeft: "auto",
                 }}
-              >{`${getCoinLabel()} `}</span>
+              >{`${getCoinLabel()} (with known fees)`}</span>
             </Typography>
           </Box>
           <Typography
@@ -746,7 +933,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
               color: "white",
             }}
           >
-            <span>{foreignCoinBalance?.toFixed(4)}</span>{" "}
+            <span>{foreignCoinBalance?.toFixed(8)}</span>{" "}
             <span
               style={{
                 marginLeft: "auto",
@@ -810,6 +997,81 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
           <DialogActions>
             <Button variant="contained" onClick={onOkInfo} autoFocus>
               Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+      {isShowTradesUnknownFee && (
+        <Dialog
+          open={isShowTradesUnknownFee}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">Warning</DialogTitle>
+          <DialogContent>
+            <DialogContentText
+              id="alert-dialog-description"
+              sx={{ color: "white" }}
+            >
+              Some of your buy orders have unknown unlocking fees.
+            </DialogContentText>
+            <Spacer height="20px" />
+            <DialogContentText
+              id="alert-dialog-description"
+              sx={{ color: "white" }}
+            >
+              You may proceed with your purchases without removing these orders,
+              but there is a higher risk that the trades may not go through. In
+              such cases, you will be refunded.
+            </DialogContentText>
+
+            <Spacer height="20px" />
+            <FormControlLabel
+              sx={{
+                margin: 0,
+              }}
+              control={
+                <Checkbox
+                  onChange={(e) =>
+                    (isRemoveOrdersWithoutUnlockingFees.current =
+                      e.target.checked)
+                  }
+                  edge="start"
+                  tabIndex={-1}
+                  disableRipple
+                  sx={{
+                    "&.Mui-checked": {
+                      color: "white",
+                    },
+                    "& .MuiSvgIcon-root": {
+                      color: "white",
+                    },
+                  }}
+                />
+              }
+              label={
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography sx={{ fontSize: "14px" }}>
+                    Remove orders with unknown unlocking fees
+                  </Typography>
+                </Box>
+              }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant="contained"
+              onClick={onCancelTradesUnknownFee}
+              autoFocus
+            >
+              Close
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onOkTradesUnknownFee}
+              autoFocus
+            >
+              Continue
             </Button>
           </DialogActions>
         </Dialog>
@@ -945,60 +1207,111 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
           </DialogActions>
         </Dialog>
       )}
-       <Dialog
-          open={!!openShowOfferDetails}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-          PaperProps={{
-            style: {
-              backgroundColor: "rgb(39, 40, 44)",
-              background: "rgb(39, 40, 44)",
-            },
+      <Dialog
+        open={!!openShowOfferDetails}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          style: {
+            backgroundColor: "rgb(39, 40, 44)",
+            background: "rgb(39, 40, 44)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            maxHeight: "calc(90vh - 55px)",
+            maxWidth: "90%",
+            background: "rgb(39, 40, 44)",
+            overflow: "auto",
           }}
         >
-          <DialogTitle
-            sx={{
-              maxHeight: "calc(90vh - 55px)",
-              maxWidth: "90%",
-              background: "rgb(39, 40, 44)",
-              overflow: "auto",
-            }}
-          >
-            <Typography variant="subtitle1">
-          Buy {openShowOfferDetails?.qortAmount} QORT @ {openShowOfferDetails?.foreignAmount} {getCoinLabel()}
-        </Typography>
-       
-          </DialogTitle>
-          <IconButton
+          <Typography variant="subtitle1">
+            Buy {openShowOfferDetails?.qortAmount} QORT @{" "}
+            {openShowOfferDetails?.foreignAmount} {getCoinLabel()}
+          </Typography>
+        </DialogTitle>
+        <IconButton
           aria-label="close"
-          onClick={()=> setOpenShowOfferDetails(null)}
+          onClick={() => setOpenShowOfferDetails(null)}
           sx={{ position: "absolute", right: 8, top: 8, color: "#fff" }}
         >
           <CloseIcon />
         </IconButton>
-          <DialogContent dividers sx={{ borderColor: "#333" }}>
-        <TradeRow enableSlice enableCopy label="Seller" value={openShowOfferDetails?.qortalCreator} extra={qortalNames[openShowOfferDetails?.qortalCreator]} />
-        <TradeRow label="Amount" value={`${openShowOfferDetails?.qortAmount} QORT`} />
-        <TradeRow label="Total" value={`${openShowOfferDetails?.foreignAmount} ${getCoinLabel()}`} />
-        <TradeRow label="Price" value={`${+openShowOfferDetails?.foreignAmount / +openShowOfferDetails?.qortAmount } ${getCoinLabel()}/QORT`} />
-        <TradeRow enableSlice enableCopy label="AT Address" value={openShowOfferDetails?.qortalAtAddress} />
-      </DialogContent>
-          <DialogActions
-            sx={{
-              background: "rgb(39, 40, 44)",
+        <DialogContent dividers sx={{ borderColor: "#333" }}>
+          {fee &&
+            openShowOfferDetails?.fee &&
+            +fee < +openShowOfferDetails?.fee && (
+              <Box
+                sx={{
+                  background: "red",
+                  padding: "10px",
+                  borderRadius: "5px",
+                }}
+              >
+                <Typography sx={{ color: "white" }}>
+                  The unlocking fee on this node is lower than the amount
+                  required for this order.
+                </Typography>
+                <Spacer height="10px" />
+                <Typography sx={{ color: "white" }}>
+                  If you're using your own node, you can change the fee by
+                  clicking the "Fee" button next to the coin selector.
+                </Typography>
+              </Box>
+            )}
+          <TradeRow
+            enableSlice
+            enableCopy
+            label="Seller"
+            value={openShowOfferDetails?.qortalCreator}
+            extra={qortalNames[openShowOfferDetails?.qortalCreator]}
+          />
+          <TradeRow
+            label="Amount"
+            value={`${openShowOfferDetails?.qortAmount} QORT`}
+          />
+          <TradeRow
+            label="Total"
+            value={`${openShowOfferDetails?.foreignAmount} ${getCoinLabel()}`}
+          />
+          <TradeRow
+            label="Price"
+            value={`${
+              +openShowOfferDetails?.foreignAmount /
+              +openShowOfferDetails?.qortAmount
+            } ${getCoinLabel()}/QORT`}
+          />
+          {openShowOfferDetails?.fee && (
+            <TradeRow
+              label="Unlocking fee"
+              value={`${openShowOfferDetails?.fee} sats`}
+            />
+          )}
+
+          <TradeRow
+            enableSlice
+            enableCopy
+            label="AT Address"
+            value={openShowOfferDetails?.qortalAtAddress}
+          />
+        </DialogContent>
+        <DialogActions
+          sx={{
+            background: "rgb(39, 40, 44)",
+          }}
+        >
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setOpenShowOfferDetails(null);
             }}
+            autoFocus
           >
-            <Button
-              variant="outlined"
-              onClick={() => {
-                setOpenShowOfferDetails(null)
-              }}
-              autoFocus
-            >
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MainContainer>
   );
 };
@@ -1008,13 +1321,13 @@ const TradeRow = ({
   value,
   extra,
   enableSlice,
-  enableCopy
+  enableCopy,
 }: {
   label: string;
   value: string;
   extra?: string;
-  enableSlice?: boolean
-  enableCopy?: boolean
+  enableSlice?: boolean;
+  enableCopy?: boolean;
 }) => (
   <Box
     sx={{
@@ -1036,10 +1349,12 @@ const TradeRow = ({
       }}
     >
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {enableSlice && value?.length > 18 ? value?.slice(0, 6) + "..." + value.slice(-4) : value}
+        {enableSlice && value?.length > 18
+          ? value?.slice(0, 6) + "..." + value.slice(-4)
+          : value}
       </Typography>
       {enableCopy && (
-          <Tooltip title="Copy">
+        <Tooltip title="Copy">
           <IconButton size="small" onClick={() => copyToClipboard(value)}>
             <ContentCopyIcon fontSize="small" />
           </IconButton>
@@ -1054,34 +1369,30 @@ const TradeRow = ({
   </Box>
 );
 
-
-const SelectWithInfoCell = ({selectTradeForDetails}) => {
-
+const SelectWithInfoCell = ({ selectTradeForDetails }) => {
   const handleInfoClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevents row selection
-    selectTradeForDetails()
+    selectTradeForDetails();
     // alert(`Info for ${data.qortalAtAddress}`); // Replace with your own UI
   };
 
- 
-
   return (
-    <div className="ag-cell-ignore-selection" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-     
-    
-        <IconButton
-          size="small"
-          onClick={handleInfoClick}
-          onClickCapture={(e) => {
-            e.stopPropagation();
-            handleInfoClick(e)
+    <div
+      className="ag-cell-ignore-selection"
+      style={{ display: "flex", alignItems: "center", gap: 6 }}
+    >
+      <IconButton
+        size="small"
+        onClick={handleInfoClick}
+        onClickCapture={(e) => {
+          e.stopPropagation();
+          handleInfoClick(e);
         }}
-          onMouseDown={(e) => e.stopPropagation()} // 👈 this is key
-          sx={{ minWidth: 0, padding: "0 4px" }}
-        >
-         <InfoOutlineIcon />
-        </IconButton>
-
+        onMouseDown={(e) => e.stopPropagation()} // 👈 this is key
+        sx={{ minWidth: 0, padding: "0 4px" }}
+      >
+        <InfoOutlineIcon />
+      </IconButton>
     </div>
   );
 };

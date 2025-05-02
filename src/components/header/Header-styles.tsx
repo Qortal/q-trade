@@ -214,10 +214,12 @@ export const CoinReceiveBtn = styled(Button)(({ theme }) => ({
 
 export const CoinSelectRow = styled(Box)({
   display: "flex",
-  flexDirection: "column",
+  flexDirection: "row",
   gap: "5px",
-  alignSelf: "flex-start",
-  marginBottom: "5px"
+  justifyContent: "flex-start",
+  marginBottom: "5px",
+  width: '100%',
+  flexWrap: 'wrap'
 });
 
 export const CoinActionContainer = styled(Box)({

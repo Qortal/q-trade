@@ -90,7 +90,7 @@
 .ag-theme-alpine-dark .ag-row-odd,
 .ag-theme-alpine-dark .ag-row-even {
   width: 100%;
-  background-color: #292929 !important; /* Replace with your desired color */
+  background-color: #292929; /* Replace with your desired color */
 }
 
 .ag-theme-alpine-dark {
@@ -144,3 +144,4 @@
   background-clip: content-box;
   border: 4px solid transparent;
 }
+
