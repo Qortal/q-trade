@@ -102,7 +102,7 @@ export default function UnsignedFees({ qortAddress }) {
 
   const getUnsignedFees = useCallback(async (address)=> {
    try {
-    const url = `http://devnet-nodes.qortal.link:11112/crosschain/unsignedfees/${address}`
+    const url = `/crosschain/unsignedfees/${address}`
     const res = await fetch(url)
     const data = await res.json()
     if(data && data.length > 0){

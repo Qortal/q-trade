@@ -5,7 +5,7 @@ import { useIndexedDBContext } from "../../contexts/indexedDBContext";
 
 const fetchTradeInfo = async (qortalAtAddress) => {
 
-  const checkIfOfferingRes = await fetch(`http://devnet-nodes.qortal.link:11112/crosschain/trade/${qortalAtAddress}`)
+  const checkIfOfferingRes = await fetch(`/crosschain/trade/${qortalAtAddress}`)
   const data = await checkIfOfferingRes.json()
    return data
 };

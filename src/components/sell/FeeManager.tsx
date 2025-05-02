@@ -28,6 +28,7 @@ import { CustomInput, CustomLabel } from "./CreateSell";
 import { Spacer } from "../common/Spacer";
 import { usePublish, Service, QortalGetMetadata } from "qapp-core";
 import { SetLeftFeature } from "ag-grid-community";
+import { formatTimestampForum } from "../../utils/formatTime";
 
 function calculateFeeFromRate(feePerKb, sizeInBytes) {
   const fee = (feePerKb / 1000) * sizeInBytes;
@@ -50,6 +51,7 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   const [recommendedFee, setRecommendedFee] = useState("m");
   const [openAlert, setOpenAlert] = useState(false);
   const [info, setInfo] = useState<any>(null);
+  const [feeTimestamp, setFeeTimestamp] = useState(null)
   const { getCoinLabel } = useContext(gameContext);
   const handleCloseAlert = (
     event?: React.SyntheticEvent | Event,
@@ -86,7 +88,6 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
         },
         1800000
       );
-      console.log('response', response)
       if ((response !== null && response !== undefined) && !isNaN(+response)) {
         setFee(response);
       }
@@ -182,20 +183,25 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   const getLatestFees = useCallback(async () => {
     try {
       const res = await fetch(
-        `http://devnet-nodes.qortal.link:11112/arbitrary/resources/searchsimple?service=JSON&identifier=foreign-fee&name=Foreign-Fee-Publisher&prefix=true&limit=1&reverse=true`
+        `/arbitrary/resources/searchsimple?service=JSON&identifier=foreign-fee&name=Foreign-Fee-Publisher&prefix=true&limit=1&reverse=true`
       );
       const data = await res.json();
       if (data && data?.length > 0) {
         setFeeLocation(data[0]);
+        const id = data[0].identifier;
+const parts = id.split("-");
+const timestampSec = parseInt(parts[2], 10);
+        setFeeTimestamp(timestampSec)
       }
-    } catch (error) {}
+    } catch (error) {
+        console.error(error)
+    }
   }, []);
 
   useEffect(() => {
     getLatestFees();
   }, [getLatestFees]);
 
-  console.log('fee', fee)
 
   if (fee === null || fee === undefined) return;
   return (
@@ -262,10 +268,12 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
                     flexDirection: 'column',
                     alignItems: 'center'
                 }}>
-                  <CustomLabel htmlFor="standard-adornment-name">
-                    Recommended fee selection ( in sats)
+                  <CustomLabel sx={{
+                    fontSize: '16px'
+                  }}  htmlFor="standard-adornment-name">
+                    Recommended fee selection (in sats)
                   </CustomLabel>
-           
+                   
                   <Spacer height="10px" />
                   <ToggleButtonGroup
                     color="primary"
@@ -288,15 +296,23 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
                   {recommendedFeeDisplay && (
                     <>
                       <Spacer height="15px" />
+                      <Box sx={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
                       <Typography
                         sx={{
                           color: "white",
                           fontSize: "18px",
                         }}
                       >
-                        New fee:{" "}
-                        {calculateFeeFromRate(recommendedFeeDisplay, 300)}
+                       <span style={{
+                        fontWeight: 'bold'
+                       }}> New fee:</span>{" "}
+                        {calculateFeeFromRate(recommendedFeeDisplay, 300)} sats
                       </Typography>
+                      </Box>
                       <Spacer height="10px" />
                       <Box
                         sx={{
@@ -321,6 +337,8 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
                           is approximately 300 kB in size.
                         </Typography>
                       </Box>
+                      <Spacer height="10px"/>
+                 
                     </>
                   )}
                 </Box>
@@ -370,6 +388,9 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
               />
               <Typography>Update fee</Typography>
             </ButtonBase>
+            {!hideRecommendations && feeTimestamp && (
+                        <CustomLabel >*Recommended fees last updated: {formatTimestampForum(feeTimestamp)}</CustomLabel>
+                    )}
           </CoinActionContainer>
         </ReusableModal>
       )}

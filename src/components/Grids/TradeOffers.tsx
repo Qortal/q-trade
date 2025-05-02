@@ -54,8 +54,8 @@ import {
   MainContainer,
 } from "./Table-styles";
 
-// export const baseLocalHost = window.location.host;
-export const baseLocalHost = "devnet-nodes.qortal.link:11111";
+export const baseLocalHost = window.location.host;
+// export const baseLocalHost = "devnet-nodes.qortal.link:11111";
 
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -322,7 +322,7 @@ export const TradeOffers: React.FC<any> = ({
 
   const getNewBlockedTrades = async () => {
     const unconfirmedTransactionsList = async () => {
-      const unconfirmedTransactionslUrl = `http://devnet-nodes.qortal.link:11112/transactions/unconfirmed?txType=MESSAGE&limit=0&reverse=true`;
+      const unconfirmedTransactionslUrl = `/transactions/unconfirmed?txType=MESSAGE&limit=0&reverse=true`;
 
       var addBlockedTrades = JSON.parse(
         localStorage.getItem("failedTrades") || "[]"
@@ -558,7 +558,7 @@ export const TradeOffers: React.FC<any> = ({
   const getSignedUnlockingFees = useCallback(async () => {
     try {
       const response = await fetch(
-        `http://devnet-nodes.qortal.link:11112/crosschain/signedfees`
+        `/crosschain/signedfees`
       );
       const data = await response.json();
       if (data && Array.isArray(data)) {
