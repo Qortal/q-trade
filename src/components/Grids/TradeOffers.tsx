@@ -27,8 +27,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
   FormControlLabel,
+  FormLabel,
   IconButton,
+  Radio,
+  RadioGroup,
   Snackbar,
   SnackbarCloseReason,
   Tooltip,
@@ -96,6 +100,7 @@ export const TradeOffers: React.FC<any> = ({
     selectedCoin,
   } = useContext(gameContext);
   const isRemoveOrdersWithoutUnlockingFees = useRef(false);
+  const [isRemoveOrders, setIsRemoveOrders] = useState('remove');
   const listOfOngoingTradesAts = useMemo(() => {
     return (
       onGoingTrades
@@ -149,30 +154,25 @@ export const TradeOffers: React.FC<any> = ({
   const feeRef = useRef(fee);
 
   const knownFees = useMemo(() => {
-    const offersWithKnownFees = [];
 
-    selectedOffers.forEach((offer) => {
-      const feeEntry = signedUnlockingFees.find(
-        (item) => item?.atAddress === offer.qortalAtAddress
-      );
 
-      if (feeEntry && typeof feeEntry.fee === "number") {
-        offersWithKnownFees.push({ ...offer, fee: feeEntry.fee });
-      }
-    });
-    const totalKnownFees = offersWithKnownFees.reduce((sum, offer) => {
-      return sum + (offer.fee || 0);
-    }, 0);
+    const lengthOfOffers = selectedOffers.length
+    const totalKnownFees = lengthOfOffers * fee
     const feeInLtc = totalKnownFees / 1e8;
     return +feeInLtc.toFixed(8);
-  }, [selectedOffers, signedUnlockingFees]);
+  }, [selectedOffers, fee]);
 
-  console.log("knownFees", knownFees);
 
   const defaultColDef = {
     resizable: true, // Make columns resizable by default
     sortable: true, // Make columns sortable by default
     suppressMovable: true, // Prevent columns from being movable
+  };
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const val = event.target.value
+    isRemoveOrdersWithoutUnlockingFees.current = val === 'remove' ? true : false
+    setIsRemoveOrders(val);
   };
 
   const getName = async (address) => {
@@ -278,7 +278,6 @@ export const TradeOffers: React.FC<any> = ({
         resizable: true,
         valueGetter: (params) => {
           if (params?.data?.qortalAtAddress) {
-            console.log("22signedUnlockingFees", signedUnlockingFees);
             const hasSignedFee = signedUnlockingFees?.find(
               (item) => item?.atAddress === params.data.qortalAtAddress
             );
@@ -570,7 +569,6 @@ export const TradeOffers: React.FC<any> = ({
     }
   }, []);
 
-  console.log("signed", signedUnlockingFees);
 
   useEffect(() => {
     getSignedUnlockingFees();
@@ -602,54 +600,54 @@ export const TradeOffers: React.FC<any> = ({
     const total = selectedOffers.reduce((acc: number, curr: any) => {
       return acc + (+curr.foreignAmount || 0); // Ensure qortAmount is defined
     }, 0);
-
+    if (selectedCoin === "PIRATECHAIN") return total;
     const totalWithKnownFees = +total + +knownFees;
     return totalWithKnownFees;
-  }, [selectedOffers, knownFees]);
+  }, [selectedOffers, knownFees, selectedCoin]);
 
   const buyOrder = async () => {
     try {
-      isRemoveOrdersWithoutUnlockingFees.current = false;
-      if (+foreignCoinBalance < +selectedTotalLTC.toFixed(4)) {
-        setOpen(true);
-        setInfo({
-          type: "error",
-          message: `You don't have enough ${getCoinLabel()} or your balance was not retrieved`,
-        });
-        return;
-      }
+
+      // if (+foreignCoinBalance < +selectedTotalLTC.toFixed(4)) {
+      //   setOpen(true);
+      //   setInfo({
+      //     type: "error",
+      //     message: `You don't have enough ${getCoinLabel()} or your balance was not retrieved`,
+      //   });
+      //   return;
+      // }
 
       if (selectedOffers?.length < 1) return;
       let offersWithKnownFees = [];
       const offersWithUnknownFees = [];
+      if (selectedCoin !== "PIRATECHAIN") {
+        selectedOffers.forEach((offer) => {
+          const feeEntry = signedUnlockingFees.find(
+            (item) => item?.atAddress === offer.qortalAtAddress
+          );
 
-      selectedOffers.forEach((offer) => {
-        const feeEntry = signedUnlockingFees.find(
-          (item) => item?.atAddress === offer.qortalAtAddress
-        );
-
-        if (feeEntry && typeof feeEntry.fee === "number") {
-          offersWithKnownFees.push({ ...offer, fee: feeEntry.fee });
-        } else {
-          offersWithUnknownFees.push(offer);
-        }
-      });
-      console.log("offersWithKnownFees", offersWithKnownFees);
-      console.log("offersWithUnknownFees", offersWithUnknownFees);
-      if (offersWithUnknownFees?.length > 0) {
-        await showTradesUnknownFee({
-          message: "",
+          if (feeEntry && typeof feeEntry.fee === "number") {
+            offersWithKnownFees.push({ ...offer, fee: feeEntry.fee });
+          } else {
+            offersWithUnknownFees.push(offer);
+          }
         });
+        if (offersWithUnknownFees?.length > 0) {
+          await showTradesUnknownFee({
+            message: "",
+          });
 
-        if (!isRemoveOrdersWithoutUnlockingFees.current) {
-          offersWithKnownFees = [
-            ...offersWithKnownFees,
-            ...offersWithUnknownFees,
-          ];
+          if (!isRemoveOrdersWithoutUnlockingFees.current) {
+            offersWithKnownFees = [
+              ...offersWithKnownFees,
+              ...offersWithUnknownFees,
+            ];
+          }
         }
+      } else {
+        offersWithKnownFees = selectedOffers;
       }
 
-      console.log("offersWithKnownFees", offersWithKnownFees);
 
       setIsShowBuyInProgress({ status: "buying" });
 
@@ -742,11 +740,9 @@ export const TradeOffers: React.FC<any> = ({
     const hasSignedFee = signedUnlockingFees?.find(
       (item) => item?.atAddress === params.data.qortalAtAddress
     );
-    console.log("hasSignedFee", hasSignedFee);
     if (hasSignedFee) {
-      console.log("fee2fee", fee);
       if (fee && hasSignedFee?.fee > fee) {
-        return { backgroundColor: "#ff6347" };
+        return { backgroundColor: "#FF0000" };
       }
     }
 
@@ -811,7 +807,6 @@ export const TradeOffers: React.FC<any> = ({
     feeRef.current = fee;
 
     if (gridRef.current?.api) {
-      console.log("Total rows:", gridRef.current.api.getDisplayedRowCount());
 
       gridRef.current.api.forEachNode((rowNode: RowNode) => {
         const qortalAtAddress = rowNode.data?.qortalAtAddress;
@@ -829,8 +824,8 @@ export const TradeOffers: React.FC<any> = ({
       gridRef.current.api.refreshCells({ force: true });
     }
   }, [signedUnlockingFees, fee]);
-  console.log("signedUnlockingFees", signedUnlockingFees, fee);
-  if (!signedUnlockingFees || !fee) return null;
+  if (!signedUnlockingFees || (!fee && selectedCoin !== "PIRATECHAIN"))
+    return null;
 
   return (
     <MainContainer>
@@ -863,11 +858,7 @@ export const TradeOffers: React.FC<any> = ({
                 (item) => item?.atAddress === params.data.qortalAtAddress
               );
               if (!hasSignedFee) selectable = true;
-              console.log(
-                "fee",
-                feeRef.current,
-                signedUnlockingFeesRef.current
-              );
+
               if (hasSignedFee && hasSignedFee?.fee > feeRef.current)
                 selectable = false;
               return selectable;
@@ -924,7 +915,9 @@ export const TradeOffers: React.FC<any> = ({
                 style={{
                   marginLeft: "auto",
                 }}
-              >{`${getCoinLabel()} (with known fees)`}</span>
+              >{`${getCoinLabel()} ${
+                selectedCoin !== "PIRATECHAIN" ? "with unlocking fees" : ""
+              }`}</span>
             </Typography>
           </Box>
           <Typography
@@ -1026,37 +1019,49 @@ export const TradeOffers: React.FC<any> = ({
             </DialogContentText>
 
             <Spacer height="20px" />
-            <FormControlLabel
-              sx={{
-                margin: 0,
-              }}
-              control={
-                <Checkbox
-                  onChange={(e) =>
-                    (isRemoveOrdersWithoutUnlockingFees.current =
-                      e.target.checked)
+            <FormControl>
+              <RadioGroup
+                aria-labelledby="demo-controlled-radio-buttons-group"
+                name="controlled-radio-buttons-group"
+                value={isRemoveOrders}
+                onChange={handleChange}
+              >
+                <FormControlLabel
+                  value={"remove"}
+                  control={
+                    <Radio
+                      sx={{
+                        "&.Mui-checked": {
+                          color: "white",
+                        },
+                        "& .MuiSvgIcon-root": {
+                          color: "white",
+                        },
+                      }}
+                    />
                   }
-                  edge="start"
-                  tabIndex={-1}
-                  disableRipple
-                  sx={{
-                    "&.Mui-checked": {
-                      color: "white",
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "white",
-                    },
-                  }}
+                  label="Remove orders with unknown unlocking fees"
                 />
-              }
-              label={
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Typography sx={{ fontSize: "14px" }}>
-                    Remove orders with unknown unlocking fees
-                  </Typography>
-                </Box>
-              }
-            />
+                <FormControlLabel
+                  value={'keep'}
+                  control={
+                    <Radio
+                      sx={{
+                        "&.Mui-checked": {
+                          color: "white",
+                        },
+                        "& .MuiSvgIcon-root": {
+                          color: "white",
+                        },
+                      }}
+                    />
+                  }
+                  label="Keep orders with unknown unlocking fees"
+                />
+              </RadioGroup>
+            </FormControl>
+
+            
           </DialogContent>
           <DialogActions>
             <Button

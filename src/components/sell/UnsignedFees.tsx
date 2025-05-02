@@ -28,7 +28,6 @@ export default function UnsignedFees({ qortAddress }) {
   const [openModal, setOpenModal] = useState(false);
   const [openAlert, setOpenAlert] = useState(false);
   const [info, setInfo] = useState<any>(null);
-  console.log("isPositive", isPositive);
   const qortAddressRef = useRef(null);
 
   const handleCloseAlert = (

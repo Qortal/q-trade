@@ -51,7 +51,6 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   const [openAlert, setOpenAlert] = useState(false);
   const [info, setInfo] = useState<any>(null);
   const { getCoinLabel } = useContext(gameContext);
-  console.log("editFee", editFee);
   const handleCloseAlert = (
     event?: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason
@@ -73,7 +72,6 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
     if (!coin) {
       return;
     }
-    console.log("selectedCoin", coin);
     // const coinRequest = coin.current.toLowerCase();
     const typeRequest = "feerequired";
 
@@ -90,7 +88,6 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
         setFee(response);
       }
 
-      console.log("response", response);
     } catch (error) {
       setFee("");
       console.error(error);
@@ -99,7 +96,6 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
 
   useEffect(() => {
     establishUpdateFeeForm(coin);
-    console.log("editFee or fetch changed");
   }, [coin, establishUpdateFeeForm]);
 
   const recommendedFeeData = useMemo(() => {
@@ -114,8 +110,9 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   }, [resource?.data]);
 
   const recommendedFeeDisplay = useMemo(() => {
-    if (!selectedCoin || !recommendedFeeData) return;
+    if (!selectedCoin || !recommendedFeeData) return null;
     const coin = getCoinLabel(selectedCoin)?.toUpperCase();
+    if(!recommendedFeeData[coin]) return null
     return recommendedFeeData[coin][recommendedFee];
   }, [recommendedFeeData, recommendedFee, selectedCoin]);
 
@@ -127,7 +124,6 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
         if(recommendedFee !== 'custom'){
             feeToSave = calculateFeeFromRate(recommendedFeeDisplay, 300)
         }
-        console.log('feeToSave', feeToSave)
       const response = await qortalRequestWithTimeout(
         {
           action: "UPDATE_FOREIGN_FEE",
@@ -205,7 +201,7 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
           },
         }}
       >
-        <Typography>Fee: {fee}</Typography>
+        <Typography>Fee: {fee} sats</Typography>
 
         <ChangeCircleIcon
           sx={{

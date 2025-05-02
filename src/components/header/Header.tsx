@@ -67,6 +67,7 @@ import { ReusableModal } from "../common/reusable-modal/ReusableModal";
 import { NotificationContext } from "../../contexts/notificationContext";
 import UnsignedFees from "../sell/UnsignedFees";
 import { FeeManager } from "../sell/FeeManager";
+import { Info } from "../sell/Info";
 
 const checkIfLocal = async () => {
   try {
@@ -504,6 +505,7 @@ export const Header = ({
               <SelectRow coin="ARRR" />
             </MenuItem>
           </Select>
+          <Info />
           {!isUsingGateway && selectedCoin !== 'PIRATECHAIN' && (
             <>
               <FeeManager selectedCoin={selectedCoin} fee={fee}
