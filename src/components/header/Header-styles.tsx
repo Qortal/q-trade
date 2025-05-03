@@ -228,7 +228,7 @@ export const CoinActionContainer = styled(Box)({
   gap: "25px",
   alignItems: "center",
   justifyContent: "center",
-  width: "80%",
+  width: "100%",
 });
 
 export const CoinActionRow = styled(Box)({

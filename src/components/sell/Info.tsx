@@ -67,11 +67,14 @@ export const Info = () => {
             setOpenModal(false);
           }}
           backdrop
-        >
-          <CoinActionContainer sx={{
+          styles={{
             width: '450px',
-            maxWidth: '95vw'
-          }}>
+            maxWidth: '95vw',
+            padding: '15px'
+          }}
+          open={openModal}
+        >
+          <CoinActionContainer>
             <CoinActionRow>
               <HeaderRow>
                 <Typography

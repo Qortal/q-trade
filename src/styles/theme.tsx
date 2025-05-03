@@ -154,6 +154,13 @@ const darkTheme = createTheme({
         disableRipple: true,
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundImage: 'none',
+        },
+      },
+    },
   },
 });
 

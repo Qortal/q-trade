@@ -68,6 +68,7 @@ import { NotificationContext } from "../../contexts/notificationContext";
 import UnsignedFees from "../sell/UnsignedFees";
 import { FeeManager } from "../sell/FeeManager";
 import { Info } from "../sell/Info";
+import { Settings } from "../sell/Settings";
 
 const checkIfLocal = async () => {
   try {
@@ -126,7 +127,7 @@ const getCoinIcon = (coin) => {
   return img;
 };
 
-const SelectRow = ({ coin }) => {
+export const SelectRow = ({ coin }) => {
   let img = getCoinIcon(coin);
 
   return (
@@ -367,7 +368,14 @@ export const Header = ({
               <Username>{cropAddress(userInfo?.address)}</Username>
             ) : null}
           </NameRow>
-          <Terms />
+          <Box sx={{
+            display: 'flex',
+            gap: '10px'
+          }}>
+             <Terms />
+            <Settings />
+          </Box>
+         
         </Box>
 
         <RightColumn
@@ -541,6 +549,7 @@ export const Header = ({
               setSenderAddress("");
             }}
             backdrop
+            open={openCoinActionModal}
           >
             <CoinActionContainer>
               {openCoinActionModal.type === "send" ? (

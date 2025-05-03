@@ -29,6 +29,8 @@ import { Spacer } from "../common/Spacer";
 import { usePublish, Service, QortalGetMetadata } from "qapp-core";
 import { SetLeftFeature } from "ag-grid-community";
 import { formatTimestampForum } from "../../utils/formatTime";
+import { useAtom } from "jotai/react";
+import { selectedFeePublisherAtom } from "../../global/state";
 
 function calculateFeeFromRate(feePerKb, sizeInBytes) {
   const fee = (feePerKb / 1000) * sizeInBytes;
@@ -46,6 +48,8 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
     service: "JSON",
   });
   const { resource } = usePublish(3, "JSON", feeLocation);
+    const [selectedFeePublisher, setSelectedFeePublisher] = useAtom(selectedFeePublisherAtom)
+  
   const [editFee, setEditFee] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [recommendedFee, setRecommendedFee] = useState("m");
@@ -104,12 +108,7 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
 
   const recommendedFeeData = useMemo(() => {
     if (!resource?.data) return null;
-    if (
-      !resource?.data?.["BTC"] ||
-      !resource?.data?.["LTC"] ||
-      !resource?.data?.["DOGE"]
-    )
-      return null;
+    
     return resource.data;
   }, [resource?.data]);
 
@@ -183,7 +182,7 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   const getLatestFees = useCallback(async () => {
     try {
       const res = await fetch(
-        `/arbitrary/resources/searchsimple?service=JSON&identifier=foreign-fee&name=Foreign-Fee-Publisher&prefix=true&limit=1&reverse=true`
+        `/arbitrary/resources/searchsimple?service=JSON&identifier=foreign-fee&name=${selectedFeePublisher}&prefix=true&limit=1&reverse=true`
       );
       const data = await res.json();
       if (data && data?.length > 0) {
@@ -196,7 +195,7 @@ const timestampSec = parseInt(parts[2], 10);
     } catch (error) {
         console.error(error)
     }
-  }, []);
+  }, [selectedFeePublisher]);
 
   useEffect(() => {
     getLatestFees();
@@ -239,12 +238,15 @@ const timestampSec = parseInt(parts[2], 10);
             setOpenModal(false);
             setEditFee(fee);
           }}
+          open={openModal}
           backdrop
-        >
-          <CoinActionContainer sx={{
+          styles={{
             width: '450px',
-            maxWidth: '95vw'
-          }}>
+            maxWidth: '95vw',
+            padding: '15px'
+          }}
+        >
+          <CoinActionContainer >
             <CoinActionRow>
               <HeaderRow>
                 <Typography
@@ -389,7 +391,9 @@ const timestampSec = parseInt(parts[2], 10);
               <Typography>Update fee</Typography>
             </ButtonBase>
             {!hideRecommendations && feeTimestamp && (
-                        <CustomLabel >*Recommended fees last updated: {formatTimestampForum(feeTimestamp)}</CustomLabel>
+                        <CustomLabel sx={{
+                            textAlign: 'center'
+                        }}>*Recommended fees last updated: {formatTimestampForum(feeTimestamp)}</CustomLabel>
                     )}
           </CoinActionContainer>
         </ReusableModal>

@@ -171,6 +171,12 @@ export default function UnsignedFees({ qortAddress }) {
             setOpenModal(false);
           }}
           backdrop
+          styles={{
+            width: '450px',
+            maxWidth: '95vw',
+            padding: '15px'
+          }}
+          open={openModal}
         >
           <CoinActionContainer>
             <CoinActionRow>

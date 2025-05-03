@@ -26,6 +26,7 @@ export const CustomLabel = styled(InputLabel)`
   font-size: 14px;
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.5);
+  white-space: normal;
 `;
 
 export const minimumAmountSellTrades = {
