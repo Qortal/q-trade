@@ -549,7 +549,7 @@ export const Header = ({
               setSenderAddress("");
             }}
             backdrop
-            open={openCoinActionModal}
+            open={!!openCoinActionModal}
           >
             <CoinActionContainer>
               {openCoinActionModal.type === "send" ? (

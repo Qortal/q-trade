@@ -30,7 +30,26 @@ import { usePublish, Service, QortalGetMetadata } from "qapp-core";
 import { SetLeftFeature } from "ag-grid-community";
 import { formatTimestampForum } from "../../utils/formatTime";
 import { useAtom } from "jotai/react";
-import { selectedFeePublisherAtom } from "../../global/state";
+import { isEnabledCustomLockingFeeAtom, selectedFeePublisherAtom } from "../../global/state";
+
+type FeeEstimate = {
+  height: number;
+  time: number;
+  low_fee_per_kb: number;
+  medium_fee_per_kb: number;
+  high_fee_per_kb: number;
+};
+ function isValidFeeEstimate(obj: any): obj is FeeEstimate {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof obj.height === 'number' &&
+    typeof obj.time === 'number' &&
+    typeof obj.low_fee_per_kb === 'number' &&
+    typeof obj.medium_fee_per_kb === 'number' &&
+    typeof obj.high_fee_per_kb === 'number'
+  );
+}
 
 function calculateFeeFromRate(feePerKb, sizeInBytes) {
   const fee = (feePerKb / 1000) * sizeInBytes;
@@ -38,7 +57,8 @@ function calculateFeeFromRate(feePerKb, sizeInBytes) {
 }
 
 function calculateRateFromFee(totalFee, sizeInBytes) {
-  return (totalFee / sizeInBytes) * 1000;
+  const fee = (totalFee / sizeInBytes) * 1000;
+  return fee.toFixed(0)
 }
 
 export const FeeManager = ({ selectedCoin, setFee, fee }) => {
@@ -49,13 +69,13 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   });
   const { resource } = usePublish(3, "JSON", feeLocation);
     const [selectedFeePublisher, setSelectedFeePublisher] = useAtom(selectedFeePublisherAtom)
+    const [isEnabledCustomLockingFee, setIsEnabledCustomLockingFee] = useAtom(isEnabledCustomLockingFeeAtom)
   
   const [editFee, setEditFee] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [recommendedFee, setRecommendedFee] = useState("m");
   const [openAlert, setOpenAlert] = useState(false);
   const [info, setInfo] = useState<any>(null);
-  const [feeTimestamp, setFeeTimestamp] = useState(null)
   const { getCoinLabel } = useContext(gameContext);
   const handleCloseAlert = (
     event?: React.SyntheticEvent | Event,
@@ -70,10 +90,15 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   };
   const coin = useMemo(() => {
     const coinLabel = getCoinLabel(selectedCoin)
-    if(typeof coinLabel !== 'string') return
+    if(typeof coinLabel !== 'string') return null
     return coinLabel?.toLowerCase();
   }, [selectedCoin, getCoinLabel]);
 
+
+  const feeTimestamp = useMemo(()=> {
+    if(!resource?.qortalMetadata?.identifier?.includes(`${coin.toUpperCase()}`)) return
+    return  resource?.data?.time || null
+  }, [resource, coin])
   const establishUpdateFeeForm = useCallback(async (coin) => {
     setFee("");
     // if the coin or type is not set, then abort
@@ -107,24 +132,25 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   }, [coin, establishUpdateFeeForm]);
 
   const recommendedFeeData = useMemo(() => {
+    if(!resource?.qortalMetadata?.identifier?.includes(`${coin.toUpperCase()}`)) return
     if (!resource?.data) return null;
-    
+    const isValid = isValidFeeEstimate(resource.data)
+    if(!isValid) return null
     return resource.data;
-  }, [resource?.data]);
+  }, [resource, coin]);
 
   const recommendedFeeDisplay = useMemo(() => {
-    if (!selectedCoin || !recommendedFeeData) return null;
-    const coinLabel = getCoinLabel(selectedCoin)
-    if(typeof coinLabel !== 'string') return
-    const coin = coinLabel?.toUpperCase();
-    if(!recommendedFeeData[coin]) return null
-    return recommendedFeeData[coin][recommendedFee];
-  }, [recommendedFeeData, recommendedFee, selectedCoin]);
+    if (!recommendedFeeData) return null;
+
+    if(!recommendedFeeData) return null
+    return recommendedFeeData[recommendedFee] || null;
+  }, [recommendedFeeData, recommendedFee]);
 
   const hideRecommendations = useMemo(()=> {
-    if(selectedCoin === 'LITECOIN' || selectedCoin === 'BITCOIN' || selectedCoin === 'DOGECOIN') return false
+    if(recommendedFeeData) return false
     return true
-  }, [selectedCoin])
+  }, [recommendedFeeData])
+
 
   useEffect(()=> {
     if(hideRecommendations){
@@ -134,6 +160,7 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
 
   const updateFee = async () => {
     const typeRequest = "feerequired";
+    const typeRequestLocking = "feekb";
 
     try {
         let feeToSave = editFee
@@ -149,6 +176,19 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
         },
         1800000
       );
+
+      if(!isEnabledCustomLockingFee){
+      await qortalRequestWithTimeout(
+          {
+            action: "UPDATE_FOREIGN_FEE",
+            coin: coin,
+            type: typeRequestLocking,
+            value: calculateRateFromFee(feeToSave, 300),
+          },
+          1800000
+        );
+
+      }
 
       if (response && !isNaN(+response)) {
         setFee(response);
@@ -181,21 +221,21 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
 
   const getLatestFees = useCallback(async () => {
     try {
+      const coinLabel = getCoinLabel(selectedCoin)
+    if(typeof coinLabel !== 'string') return
+    const coin = coinLabel?.toUpperCase();
+    const identifier = `coinInfo-${coin}`
       const res = await fetch(
-        `/arbitrary/resources/searchsimple?service=JSON&identifier=foreign-fee&name=${selectedFeePublisher}&prefix=true&limit=1&reverse=true`
+        `/arbitrary/resources/searchsimple?service=JSON&identifier=${identifier}&name=${selectedFeePublisher}&prefix=true&limit=1&reverse=true`
       );
       const data = await res.json();
       if (data && data?.length > 0) {
         setFeeLocation(data[0]);
-        const id = data[0].identifier;
-const parts = id.split("-");
-const timestampSec = parseInt(parts[2], 10);
-        setFeeTimestamp(timestampSec)
       }
     } catch (error) {
         console.error(error)
     }
-  }, [selectedFeePublisher]);
+  }, [selectedFeePublisher, selectedCoin]);
 
   useEffect(() => {
     getLatestFees();
@@ -286,9 +326,9 @@ const timestampSec = parseInt(parts[2], 10);
                   >
                     {!hideRecommendations && (
                         <>
-                         <ToggleButton value="l">Low</ToggleButton>
-                    <ToggleButton value="m">Medium</ToggleButton>
-                    <ToggleButton value="h">High</ToggleButton>
+                         <ToggleButton value="low_fee_per_kb">Low</ToggleButton>
+                    <ToggleButton value="medium_fee_per_kb">Medium</ToggleButton>
+                    <ToggleButton value="high_fee_per_kb">High</ToggleButton>
                         </>
                     )}
                    

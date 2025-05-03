@@ -11,6 +11,8 @@ import {
   Box,
   Button,
   ButtonBase,
+  Checkbox,
+  FormControlLabel,
   IconButton,
   MenuItem,
   Select,
@@ -32,21 +34,25 @@ import {
 } from "../header/Header-styles";
 import { CustomInput, CustomLabel } from "./CreateSell";
 import { Spacer } from "../common/Spacer";
-import { usePublish, Service, QortalGetMetadata } from "qapp-core";
+import { usePublish, Service, QortalGetMetadata, useGlobal } from "qapp-core";
 import { SetLeftFeature } from "ag-grid-community";
 import { formatTimestampForum } from "../../utils/formatTime";
 import { SelectRow } from "../header/Header";
 import { useAtom } from "jotai/react";
-import { selectedFeePublisherAtom } from "../../global/state";
+import { isEnabledCustomLockingFeeAtom, selectedFeePublisherAtom } from "../../global/state";
 
 export const Settings = () => {
+  const saveDataLocal = useGlobal().persistentOperations.saveData
+  const getDataLocal = useGlobal().persistentOperations.getData
   const [openModal, setOpenModal] = useState(false);
   const [lockingFee, setLockingFee] = useState("");
+
   const [editLockingFee, setEditLockingFee] = useState("");
   const [openAlert, setOpenAlert] = useState(false);
   const [info, setInfo] = useState<any>(null);
   const [selectedCoin, setSelectedCoin] = useState("LTC");
   const [selectedFeePublisher, setSelectedFeePublisher] = useAtom(selectedFeePublisherAtom)
+  const [isEnabledCustomLockingFee, setIsEnabledCustomLockingFee] = useAtom(isEnabledCustomLockingFeeAtom)
   const handleCloseAlert = (
     event?: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason
@@ -94,6 +100,11 @@ export const Settings = () => {
     }
   };
 
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsEnabledCustomLockingFee(event.target.checked);
+    saveDataLocal('isEnabledCustomLockingFee', event.target.checked)
+  };
+
   const establishUpdateFeeForm = useCallback(async (coin) => {
     setLockingFee("");
     setEditLockingFee("");
@@ -125,8 +136,27 @@ export const Settings = () => {
   }, []);
 
   useEffect(() => {
+    if(!openModal) return
     establishUpdateFeeForm(selectedCoin);
-  }, [selectedCoin, establishUpdateFeeForm]);
+  }, [selectedCoin, establishUpdateFeeForm, openModal]);
+
+  useEffect(()=> {
+    const getSavedSelectedPublisher = async ()=> {
+      try {
+        const res = await getDataLocal('selectedFeePublisher')
+        if(res){
+          setSelectedFeePublisher(res)
+        }
+        const res2 = await getDataLocal('isEnabledCustomLockingFee')
+        if(res2){
+          setIsEnabledCustomLockingFee(res)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    getSavedSelectedPublisher()
+  }, [])
 
   return (
     <>
@@ -163,48 +193,53 @@ export const Settings = () => {
             padding: '5px'
           }}>
             <Typography>Locking fees</Typography>
-            <CoinSelectRow sx={{
-                gap: '20px'
-            }}>
-              <Select
-                size="small"
-                value={selectedCoin}
-                onChange={(e) => {
-                  setLockingFee("");
-                  setEditLockingFee("");
-                  setSelectedCoin(e.target.value);
-                }}
-              >
-                <MenuItem value={"LTC"}>
-                  <SelectRow coin="LTC" />
-                </MenuItem>
-                <MenuItem value={"DOGE"}>
-                  <SelectRow coin="DOGE" />
-                </MenuItem>
-                <MenuItem value={"BTC"}>
-                  <SelectRow coin="BTC" />
-                </MenuItem>
-                <MenuItem value={"DGB"}>
-                  <SelectRow coin="DGB" />
-                </MenuItem>
-                <MenuItem value={"RVN"}>
-                  <SelectRow coin="RVN" />
-                </MenuItem>
-              </Select>
-              <Box>
-                  <CustomLabel htmlFor="standard-adornment-name">
-                    Locking fee for {selectedCoin} (sats)
-                  </CustomLabel>
-                  <Spacer height="5px" />
-                  <CustomInput
-                    id="standard-adornment-name"
-                    type="number"
-                    value={editLockingFee}
-                    onChange={(e) => setEditLockingFee(e.target.value)}
-                    autoComplete="off"
-                  />
-                </Box>
-            </CoinSelectRow>
+            <FormControlLabel control={<Checkbox checked={isEnabledCustomLockingFee} onChange={handleChange} />} label="Enable custom locking fee" />
+
+            {isEnabledCustomLockingFee && (
+                <CoinSelectRow sx={{
+                  gap: '20px'
+              }}>
+                <Select
+                  size="small"
+                  value={selectedCoin}
+                  onChange={(e) => {
+                    setLockingFee("");
+                    setEditLockingFee("");
+                    setSelectedCoin(e.target.value);
+                  }}
+                >
+                  <MenuItem value={"LTC"}>
+                    <SelectRow coin="LTC" />
+                  </MenuItem>
+                  <MenuItem value={"DOGE"}>
+                    <SelectRow coin="DOGE" />
+                  </MenuItem>
+                  <MenuItem value={"BTC"}>
+                    <SelectRow coin="BTC" />
+                  </MenuItem>
+                  <MenuItem value={"DGB"}>
+                    <SelectRow coin="DGB" />
+                  </MenuItem>
+                  <MenuItem value={"RVN"}>
+                    <SelectRow coin="RVN" />
+                  </MenuItem>
+                </Select>
+                <Box>
+                    <CustomLabel htmlFor="standard-adornment-name">
+                      Locking fee for {selectedCoin} (sats per kb)
+                    </CustomLabel>
+                    <Spacer height="5px" />
+                    <CustomInput
+                      id="standard-adornment-name"
+                      type="number"
+                      value={editLockingFee}
+                      onChange={(e) => setEditLockingFee(e.target.value)}
+                      autoComplete="off"
+                    />
+                  </Box>
+              </CoinSelectRow>
+            )}
+          
 
             <ButtonBase
               onClick={updateLockingFee}
@@ -242,7 +277,11 @@ export const Settings = () => {
                 size="small"
                 value={selectedFeePublisher}
                 onChange={(e) => {
-                  setSelectedFeePublisher(e.target.value);
+                  if(e.target.value){
+                    setSelectedFeePublisher(e.target.value);
+                    saveDataLocal('selectedFeePublisher', e.target.value)
+                  }
+                 
                 }}
               >
                 <MenuItem value={"Foreign-Fee-Publisher"}>

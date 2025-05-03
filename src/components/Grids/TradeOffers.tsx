@@ -60,6 +60,7 @@ export const baseLocalHost = window.location.host;
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import moment from "moment";
+import { RequestQueueWithPromise } from "qapp-core";
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text);
@@ -83,6 +84,9 @@ export const saveFileToDisk = async (data) => {
 export const autoSizeStrategy: SizeColumnsToContentStrategy = {
   type: "fitCellContents",
 };
+
+ const requestQueueGetNames = new RequestQueueWithPromise(4);
+
 
 export const TradeOffers: React.FC<any> = ({
   foreignCoinBalance,
@@ -175,9 +179,17 @@ export const TradeOffers: React.FC<any> = ({
     setIsRemoveOrders(val);
   };
 
+  const isFetchingName = useRef({})
+
   const getName = async (address) => {
     try {
-      const response = await fetch("/names/address/" + address);
+      if(isFetchingName.current[address]) return
+      isFetchingName.current[address] = true
+     const response = await requestQueueGetNames.enqueue(
+        () => {
+          return fetch("/names/address/" + address);
+        }
+      );
       const nameData = await response.json();
       if (nameData?.length > 0) {
         setQortalNames((prev) => {
