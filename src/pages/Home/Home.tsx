@@ -113,8 +113,8 @@ export const HomePage = () => {
             </TextTableTitle>
           </Box>
           <Spacer height="10px" />
-          <TradeOffers fee={fee}
-        setFee={setFee} foreignCoinBalance={foreignCoinBalance} />
+          <TradeOffers setFee={setFee} fee={fee}
+         foreignCoinBalance={foreignCoinBalance} />
         </div>
 
         <CreateSell show={mode === "sell"} qortAddress={userInfo?.address} />

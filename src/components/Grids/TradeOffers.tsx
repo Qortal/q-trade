@@ -61,6 +61,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import moment from "moment";
 import { RequestQueueWithPromise } from "qapp-core";
+import { useUpdateFee } from "../../hooks/useUpdateFee";
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text);
@@ -91,6 +92,7 @@ export const autoSizeStrategy: SizeColumnsToContentStrategy = {
 export const TradeOffers: React.FC<any> = ({
   foreignCoinBalance,
   fee,
+  setFee
 }: any) => {
   const [offers, setOffers] = useState<any[]>([]);
   const [signedUnlockingFees, setSignedUnlockingFees] = useState(null);
@@ -105,6 +107,7 @@ export const TradeOffers: React.FC<any> = ({
   } = useContext(gameContext);
   const isRemoveOrdersWithoutUnlockingFees = useRef(false);
   const [isRemoveOrders, setIsRemoveOrders] = useState('remove');
+  const updateFee = useUpdateFee({setFee, selectedCoin})
   const listOfOngoingTradesAts = useMemo(() => {
     return (
       onGoingTrades
@@ -128,6 +131,14 @@ export const TradeOffers: React.FC<any> = ({
     message: messageTradesUnknownFee,
   } = useModal();
 
+  const {
+    isShow: isShowAskToUpdateFee,
+    onCancel: onCancelAskToUpdateFee,
+    onOk: onOkAskToUpdateFee,
+    show: showAskToUpdateFee,
+    message: messageAskToUpdateFee,
+  } = useModal();
+  
   const offersWithoutOngoing = useMemo(() => {
     return offers.filter(
       (item) => !listOfOngoingTradesAts.includes(item.qortalAtAddress)
@@ -228,6 +239,20 @@ export const TradeOffers: React.FC<any> = ({
     }
   };
 
+  const rowTooltip = (params) => {
+    let selectable = true;
+    const hasSignedFee = signedUnlockingFees?.find(
+      (item) => item?.atAddress === params.data.qortalAtAddress
+    );
+    if (!hasSignedFee) selectable = true;
+
+    if (hasSignedFee && hasSignedFee?.fee > feeRef.current)
+      selectable = false;
+    if(!selectable)return  'Your unlocking fee is to low to buy this order, Increase your fee to purchase'
+
+    return ''
+  };
+
   const columnDefs: ColDef[] = useMemo(() => {
     return [
       {
@@ -239,7 +264,7 @@ export const TradeOffers: React.FC<any> = ({
         pinned: "left", // Optional, to pin this column on the left
         resizable: false,
         suppressRowClickSelection: true,
-
+        tooltipValueGetter: rowTooltip,
         cellRenderer: (params) => (
           <SelectWithInfoCell
             {...params}
@@ -265,6 +290,7 @@ export const TradeOffers: React.FC<any> = ({
         flex: 1, // Flex makes this column responsive
         minWidth: 150, // Ensure it doesn't shrink too much
         resizable: true,
+        tooltipValueGetter: rowTooltip
       },
       {
         headerName: `${getCoinLabel()}/QORT`,
@@ -275,6 +301,7 @@ export const TradeOffers: React.FC<any> = ({
         flex: 1, // Flex makes this column responsive
         minWidth: 150, // Ensure it doesn't shrink too much
         resizable: true,
+        tooltipValueGetter: rowTooltip
       },
       {
         headerName: `Total ${getCoinLabel()} Value`,
@@ -282,12 +309,14 @@ export const TradeOffers: React.FC<any> = ({
         flex: 1, // Flex makes this column responsive
         minWidth: 150, // Ensure it doesn't shrink too much
         resizable: true,
+        tooltipValueGetter: rowTooltip
       },
       {
         headerName: `Unlocking fee`,
         flex: 1, // Flex makes this column responsive
         minWidth: 150, // Ensure it doesn't shrink too much
         resizable: true,
+        tooltipValueGetter: rowTooltip,
         valueGetter: (params) => {
           if (params?.data?.qortalAtAddress) {
             const hasSignedFee = signedUnlockingFees?.find(
@@ -304,6 +333,7 @@ export const TradeOffers: React.FC<any> = ({
         flex: 1, // Flex makes this column responsive
         minWidth: 300, // Ensure it doesn't shrink too much
         resizable: true,
+        tooltipValueGetter: rowTooltip,
         valueGetter: (params) => {
           if (params?.data?.qortalCreator) {
             if (qortalNames[params?.data?.qortalCreator]) {
@@ -660,6 +690,20 @@ export const TradeOffers: React.FC<any> = ({
         offersWithKnownFees = selectedOffers;
       }
 
+      const highestFee = offersWithKnownFees.length
+  ? Math.max(
+      ...offersWithKnownFees
+        .filter(o => typeof o.fee === 'number')
+        .map(o => o.fee as number)
+    )
+  : 0;
+    if(highestFee < fee){
+
+      await showAskToUpdateFee({
+        message: highestFee
+      })
+    }
+
 
       setIsShowBuyInProgress({ status: "buying" });
 
@@ -864,6 +908,7 @@ export const TradeOffers: React.FC<any> = ({
           onGridReady={onGridReady}
           //  domLayout='autoHeight'
           getRowId={(params) => params.data.qortalAtAddress} // Ensure rows have unique IDs
+          enableBrowserTooltips={true}
           gridOptions={{
             isRowSelectable: (params) => {
               let selectable = true;
@@ -1001,7 +1046,7 @@ export const TradeOffers: React.FC<any> = ({
             </Button>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={onOkInfo} autoFocus>
+            <Button variant="outlined" onClick={onOkInfo} autoFocus>
               Close
             </Button>
           </DialogActions>
@@ -1012,9 +1057,19 @@ export const TradeOffers: React.FC<any> = ({
           open={isShowTradesUnknownFee}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
+          PaperProps={{
+            style: {
+              backgroundColor: "rgb(39, 40, 44)",
+              background: "rgb(39, 40, 44)",
+            },
+          }}
         >
-          <DialogTitle id="alert-dialog-title">Warning</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{
+         
+            background: "rgb(39, 40, 44)"
+
+          }} id="alert-dialog-title">Warning</DialogTitle>
+          <DialogContent sx={{ borderColor: "#333" }}>
             <DialogContentText
               id="alert-dialog-description"
               sx={{ color: "white" }}
@@ -1076,20 +1131,77 @@ export const TradeOffers: React.FC<any> = ({
 
             
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{
+            background: "rgb(39, 40, 44)",
+          }}>
             <Button
-              variant="contained"
+              variant="outlined"
               onClick={onCancelTradesUnknownFee}
               autoFocus
             >
               Close
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
               onClick={onOkTradesUnknownFee}
               autoFocus
             >
               Continue
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+{isShowAskToUpdateFee && (
+        <Dialog
+          open={isShowAskToUpdateFee}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+          PaperProps={{
+            style: {
+              backgroundColor: "rgb(39, 40, 44)",
+              background: "rgb(39, 40, 44)",
+            },
+          }}
+        >
+          <DialogTitle  sx={{
+            background: "rgb(39, 40, 44)",
+          }} id="alert-dialog-title">Suggestion</DialogTitle>
+          <DialogContent sx={{ borderColor: "#333" }}>
+            <DialogContentText
+              id="alert-dialog-description"
+              sx={{ color: "white" }}
+            >
+              Your current unlocking fee is higher than necessary. You can lower it to match the highest required fee and reduce costs.
+            </DialogContentText>
+            <Spacer height="20px" />
+     
+
+            
+          </DialogContent>
+          <DialogActions   sx={{
+              background: "rgb(39, 40, 44)",
+            }}>
+            <Button
+              variant="outlined"
+              onClick={onOkAskToUpdateFee}
+              
+            >
+              Continue without updating
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={async (e)=> {
+                try {
+                  await updateFee(messageAskToUpdateFee.message)
+                } catch (error) {
+                  console.error(error)
+                }
+                onOkAskToUpdateFee(e)
+              }}
+              
+            >
+              Lower fee
             </Button>
           </DialogActions>
         </Dialog>

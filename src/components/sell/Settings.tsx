@@ -39,20 +39,34 @@ import { SetLeftFeature } from "ag-grid-community";
 import { formatTimestampForum } from "../../utils/formatTime";
 import { SelectRow } from "../header/Header";
 import { useAtom } from "jotai/react";
-import { isEnabledCustomLockingFeeAtom, selectedFeePublisherAtom } from "../../global/state";
+import {
+  isEnabledCustomLockingFeeAtom,
+  selectedFeePublisherAtom,
+} from "../../global/state";
+import { useRecommendedFees } from "../../hooks/useRecommendedFees";
 
 export const Settings = () => {
-  const saveDataLocal = useGlobal().persistentOperations.saveData
-  const getDataLocal = useGlobal().persistentOperations.getData
+  const saveDataLocal = useGlobal().persistentOperations.saveData;
+  const getDataLocal = useGlobal().persistentOperations.getData;
   const [openModal, setOpenModal] = useState(false);
   const [lockingFee, setLockingFee] = useState("");
+  const [recommendedFee, setRecommendedFee] = useState("medium_fee_per_kb");
+  const [selectedCoin, setSelectedCoin] = useState("LITECOIN");
+
+  const { hideRecommendations, recommendedFeeDisplay, coin } = useRecommendedFees({
+    selectedCoin,
+    recommendedFee
+  });
 
   const [editLockingFee, setEditLockingFee] = useState("");
   const [openAlert, setOpenAlert] = useState(false);
   const [info, setInfo] = useState<any>(null);
-  const [selectedCoin, setSelectedCoin] = useState("LTC");
-  const [selectedFeePublisher, setSelectedFeePublisher] = useAtom(selectedFeePublisherAtom)
-  const [isEnabledCustomLockingFee, setIsEnabledCustomLockingFee] = useAtom(isEnabledCustomLockingFeeAtom)
+  const [selectedFeePublisher, setSelectedFeePublisher] = useAtom(
+    selectedFeePublisherAtom
+  );
+  const [isEnabledCustomLockingFee, setIsEnabledCustomLockingFee] = useAtom(
+    isEnabledCustomLockingFeeAtom
+  );
   const handleCloseAlert = (
     event?: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason
@@ -69,12 +83,14 @@ export const Settings = () => {
     const typeRequest = "feekb";
 
     try {
-      const feeToSave = editLockingFee;
-
+      let feeToSave = editLockingFee;
+      if (recommendedFee !== "custom") {
+        feeToSave = recommendedFeeDisplay
+      }
       const response = await qortalRequestWithTimeout(
         {
           action: "UPDATE_FOREIGN_FEE",
-          coin: selectedCoin,
+          coin: coin,
           type: typeRequest,
           value: feeToSave,
         },
@@ -102,7 +118,16 @@ export const Settings = () => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsEnabledCustomLockingFee(event.target.checked);
-    saveDataLocal('isEnabledCustomLockingFee', event.target.checked)
+    saveDataLocal("isEnabledCustomLockingFee", event.target.checked);
+  };
+
+  const handleChangeRecommended = (
+    event: React.MouseEvent<HTMLElement>,
+    newAlignment: string
+  ) => {
+    if (newAlignment) {
+      setRecommendedFee(newAlignment);
+    }
   };
 
   const establishUpdateFeeForm = useCallback(async (coin) => {
@@ -136,27 +161,33 @@ export const Settings = () => {
   }, []);
 
   useEffect(() => {
-    if(!openModal) return
-    establishUpdateFeeForm(selectedCoin);
-  }, [selectedCoin, establishUpdateFeeForm, openModal]);
+    if (!openModal) return;
+    establishUpdateFeeForm(coin);
+  }, [coin, establishUpdateFeeForm, openModal]);
 
-  useEffect(()=> {
-    const getSavedSelectedPublisher = async ()=> {
+  useEffect(() => {
+    const getSavedSelectedPublisher = async () => {
       try {
-        const res = await getDataLocal('selectedFeePublisher')
-        if(res){
-          setSelectedFeePublisher(res)
+        const res = await getDataLocal("selectedFeePublisher");
+        if (res) {
+          setSelectedFeePublisher(res);
         }
-        const res2 = await getDataLocal('isEnabledCustomLockingFee')
-        if(res2){
-          setIsEnabledCustomLockingFee(res)
+        const res2 = await getDataLocal("isEnabledCustomLockingFee");
+        if (res2) {
+          setIsEnabledCustomLockingFee(res);
         }
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
-    }
-    getSavedSelectedPublisher()
-  }, [])
+    };
+    getSavedSelectedPublisher();
+  }, []);
+
+    useEffect(() => {
+      if (hideRecommendations) {
+        setRecommendedFee("custom");
+      }
+    }, [hideRecommendations]);
 
   return (
     <>
@@ -187,18 +218,33 @@ export const Settings = () => {
           }}
           open={openModal}
         >
-          <CoinActionContainer sx={{
-            border: '1px solid #3F3F3F',
-            borderRadius: '5px',
-            padding: '5px'
-          }}>
+          <CoinActionContainer
+            sx={{
+              border: "1px solid #3F3F3F",
+              borderRadius: "5px",
+              padding: "5px",
+            }}
+          >
             <Typography>Locking fees</Typography>
-            <FormControlLabel control={<Checkbox checked={isEnabledCustomLockingFee} onChange={handleChange} />} label="Enable custom locking fee" />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isEnabledCustomLockingFee}
+                  onChange={handleChange}
+                />
+              }
+              label="Enable custom locking fee"
+            />
 
             {isEnabledCustomLockingFee && (
-                <CoinSelectRow sx={{
-                  gap: '20px'
-              }}>
+              <>
+               <CoinSelectRow
+                sx={{
+                  gap: "20px",
+                  width: '100%',
+                  justifyContent: 'center'
+                }}
+              >
                 <Select
                   size="small"
                   value={selectedCoin}
@@ -208,25 +254,119 @@ export const Settings = () => {
                     setSelectedCoin(e.target.value);
                   }}
                 >
-                  <MenuItem value={"LTC"}>
+                  <MenuItem value={"LITECOIN"}>
                     <SelectRow coin="LTC" />
                   </MenuItem>
-                  <MenuItem value={"DOGE"}>
+                  <MenuItem value={"DOGECOIN"}>
                     <SelectRow coin="DOGE" />
                   </MenuItem>
-                  <MenuItem value={"BTC"}>
+                  <MenuItem value={"BITCOIN"}>
                     <SelectRow coin="BTC" />
                   </MenuItem>
-                  <MenuItem value={"DGB"}>
+                  <MenuItem value={"DIGIBYTE"}>
                     <SelectRow coin="DGB" />
                   </MenuItem>
-                  <MenuItem value={"RVN"}>
+                  <MenuItem value={"RAVENCOIN"}>
                     <SelectRow coin="RVN" />
+                  </MenuItem>
+                  <MenuItem value={"PIRATECHAIN"}>
+                    <SelectRow coin="ARRR" />
                   </MenuItem>
                 </Select>
                 <Box>
+                 
+                </Box>
+              </CoinSelectRow>
+               <CoinActionRow>
+              <HeaderRow>
+                <Box
+                  sx={{
+                    width: "100%",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
+                    <CustomLabel
+                      sx={{
+                        fontSize: "16px",
+                      }}
+                      htmlFor="standard-adornment-name"
+                    >
+                      Recommended fee selection (in sats per kb)
+                    </CustomLabel>
+
+                    <Spacer height="10px" />
+                    <ToggleButtonGroup
+                      color="primary"
+                      value={recommendedFee}
+                      exclusive
+                      onChange={handleChangeRecommended}
+                      aria-label="Platform"
+                    >
+                      {!hideRecommendations && (
+                        <>
+                          <ToggleButton value="low_fee_per_kb">
+                            Low
+                          </ToggleButton>
+                          <ToggleButton value="medium_fee_per_kb">
+                            Medium
+                          </ToggleButton>
+                          <ToggleButton value="high_fee_per_kb">
+                            High
+                          </ToggleButton>
+                        </>
+                      )}
+
+                      <ToggleButton value="custom">Custom</ToggleButton>
+                    </ToggleButtonGroup>
+                  </Box>
+                  {recommendedFeeDisplay && (
+                    <>
+                      <Spacer height="15px" />
+                      <Box
+                        sx={{
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            color: "white",
+                            fontSize: "18px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {" "}
+                            New fee:
+                          </span>{" "}
+                          {recommendedFeeDisplay}{" "}
+                          sats per kb
+                        </Typography>
+                      </Box>
+                 
+                      <Spacer height="10px" />
+                    </>
+                  )}
+                </Box>
+              </HeaderRow>
+            </CoinActionRow>
+            {recommendedFee === "custom" && (
+              <CoinActionRow>
+                <HeaderRow>
+                  <Box>
                     <CustomLabel htmlFor="standard-adornment-name">
-                      Locking fee for {selectedCoin} (sats per kb)
+                      Custom fee
                     </CustomLabel>
                     <Spacer height="5px" />
                     <CustomInput
@@ -237,13 +377,16 @@ export const Settings = () => {
                       autoComplete="off"
                     />
                   </Box>
-              </CoinSelectRow>
+                </HeaderRow>
+              </CoinActionRow>
             )}
-          
+              </>
+            )}
 
+        
             <ButtonBase
               onClick={updateLockingFee}
-              disabled={!editLockingFee}
+              disabled={recommendedFee === "custom" && !editLockingFee}
               sx={{
                 minHeight: "42px",
                 border: "1px solid gray",
@@ -266,32 +409,33 @@ export const Settings = () => {
               <Typography>Update locking fee</Typography>
             </ButtonBase>
           </CoinActionContainer>
-            <Spacer height="20px"/>
-          <CoinActionContainer sx={{
-            border: '1px solid #3F3F3F',
-            borderRadius: '5px',
-            padding: '5px'
-          }}>
+          <Spacer height="20px" />
+          <CoinActionContainer
+            sx={{
+              border: "1px solid #3F3F3F",
+              borderRadius: "5px",
+              padding: "5px",
+            }}
+          >
             <Typography>Fee publisher</Typography>
             <Select
-                size="small"
-                value={selectedFeePublisher}
-                onChange={(e) => {
-                  if(e.target.value){
-                    setSelectedFeePublisher(e.target.value);
-                    saveDataLocal('selectedFeePublisher', e.target.value)
-                  }
-                 
-                }}
-              >
-                <MenuItem value={"Foreign-Fee-Publisher"}>
-                  <SelectRow coin="Foreign-Fee-Publisher" />
-                </MenuItem>
-                <MenuItem value={"Ice.JSON"}>
-                  <SelectRow coin="Ice.JSON" />
-                </MenuItem>
-              </Select>
-            </CoinActionContainer>
+              size="small"
+              value={selectedFeePublisher}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setSelectedFeePublisher(e.target.value);
+                  saveDataLocal("selectedFeePublisher", e.target.value);
+                }
+              }}
+            >
+              <MenuItem value={"Foreign-Fee-Publisher"}>
+                <SelectRow coin="Foreign-Fee-Publisher" />
+              </MenuItem>
+              <MenuItem value={"Ice.JSON"}>
+                <SelectRow coin="Ice.JSON" />
+              </MenuItem>
+            </Select>
+          </CoinActionContainer>
         </ReusableModal>
       )}
       <Snackbar
