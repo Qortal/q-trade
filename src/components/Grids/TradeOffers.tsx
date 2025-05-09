@@ -56,12 +56,15 @@ import {
 
 export const baseLocalHost = window.location.host;
 // export const baseLocalHost = "devnet-nodes.qortal.link:11111";
+// export const baseLocalHost = "127.0.0.1:12391";
 
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import moment from "moment";
 import { RequestQueueWithPromise } from "qapp-core";
 import { useUpdateFee } from "../../hooks/useUpdateFee";
+import { useSetAtom } from "jotai/react";
+import { stuckTradesAtom } from "../../global/state";
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text);
@@ -97,6 +100,7 @@ export const TradeOffers: React.FC<any> = ({
   const [offers, setOffers] = useState<any[]>([]);
   const [signedUnlockingFees, setSignedUnlockingFees] = useState(null);
   const [qortalNames, setQortalNames] = useState({});
+  const setStuckTrades = useSetAtom(stuckTradesAtom)
   const {
     fetchOngoingTransactions,
     onGoingTrades,
@@ -448,6 +452,10 @@ export const TradeOffers: React.FC<any> = ({
       return offeringTrade.tradePresenceExpiry > Date.now();
     };
 
+    const filterForStuckDrades = (offeringTrade: any) => {
+      return (!offeringTrade?.tradePresenceExpiry || offeringTrade.tradePresenceExpiry < Date.now());
+    };
+
     const startOfferPresenceMapping = async () => {
       if (tradePresenceTxns.current) {
         for (const tradePresence of tradePresenceTxns.current) {
@@ -467,6 +475,11 @@ export const TradeOffers: React.FC<any> = ({
         offeringTrades.current?.filter((offeringTrade) =>
           filterOffersUsingTradePresence(offeringTrade)
         ) || [];
+
+      const stuckTrades = offeringTrades.current?.filter((offeringTrade) =>
+        filterForStuckDrades(offeringTrade)
+      ) || [];
+      setStuckTrades(stuckTrades?.sort((a, b) => b.timestamp - a.timestamp))
       let tradesPresenceCleaned: any[] = filteredOffers;
 
       blockedTradesList.current.forEach((item: any) => {
@@ -549,10 +562,10 @@ export const TradeOffers: React.FC<any> = ({
     socketRef.current.onmessage = (e) => {
       offeringTrades.current = [
         ...offeringTrades.current?.filter(
-          (coin) => coin?.foreignBlockchain === selectedCoin
+          (coin) => coin?.foreignBlockchain === selectedCoin && coin?.mode === 'OFFERING'
         ),
         ...JSON.parse(e.data)?.filter(
-          (coin) => coin?.foreignBlockchain === selectedCoin
+          (coin) => coin?.foreignBlockchain === selectedCoin && coin?.mode === 'OFFERING'
         ),
       ];
       restarted = false;

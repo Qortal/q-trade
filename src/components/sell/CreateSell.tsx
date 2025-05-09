@@ -4,6 +4,7 @@ import {
   Button,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   IconButton,
   InputLabel,
@@ -13,12 +14,16 @@ import {
   Typography,
   styled,
 } from "@mui/material";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { BootstrapDialog } from "../Terms";
 import CloseIcon from "@mui/icons-material/Close";
 import { Spacer } from "../common/Spacer";
 import gameContext from "../../contexts/gameContext";
 import TradeBotList from "./TradeBotList";
+import { stuckTradesAtom } from "../../global/state";
+import { useAtom } from "jotai/react";
+import { StuckOrdersTable } from "./StuckOrdersTable";
+import { useGlobal } from "qapp-core";
 
 export const CustomLabel = styled(InputLabel)`
   font-weight: 400;
@@ -97,6 +102,7 @@ export const CustomInput = styled(TextField)({
 
 export const CreateSell = ({ qortAddress, show }) => {
   const [open, setOpen] = React.useState(false);
+  const [openStuckOrders, setOpenStuckOrders] = React.useState(false);
   const [qortAmount, setQortAmount] = React.useState(0);
   const [foreignAmount, setForeignAmount] = React.useState(0);
   const {
@@ -220,7 +226,21 @@ export const CreateSell = ({ qortAddress, show }) => {
         display: show ? "block" : "none",
       }}
     >
-      <Button onClick={handleClickOpen}>New Sell Order</Button>
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+      <Button sx={{
+        margin: '10px 0px'
+      }} variant="outlined" onClick={handleClickOpen}>New Sell Order</Button>
+      {!isUsingGateway && (
+         <Button sx={{
+          margin: '10px 0px'
+        }} variant="outlined" onClick={()=> setOpenStuckOrders(true)}>Stuck orders</Button>
+      )}
+      
+    </Box>
       <TradeBotList
         qortAddress={qortAddress}
         failedTradeBots={sellOrders.filter((item) => item.status === "FAILED")}
@@ -325,6 +345,55 @@ export const CreateSell = ({ qortAddress, show }) => {
           {info?.message}
         </Alert>
       </Snackbar>
+      {openStuckOrders && (
+        <StuckOrders setOpenStuckOrders={setOpenStuckOrders} />
+      )}
     </div>
   );
 };
+
+
+const StuckOrders = ({setOpenStuckOrders})=> {
+    const [stuckTrades] = useAtom(stuckTradesAtom)
+    const address = useGlobal().auth.address
+  const filteredByAddress = stuckTrades?.filter((item)=> item?.qortalCreator === address)
+
+  return (
+    <BootstrapDialog
+        aria-labelledby="customized-dialog-title"
+        open={true}
+        maxWidth="lg"
+        fullWidth={true}
+      >
+        <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
+          Stuck sell orders
+        </DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={()=> setOpenStuckOrders(false)}
+          sx={(theme) => ({
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: theme.palette.grey[500],
+          })}
+        >
+          <CloseIcon />
+        </IconButton>
+        <DialogContent dividers>
+          <DialogContentText></DialogContentText>
+          <Spacer height="20px" />
+          {filteredByAddress?.length === 0 && (
+            <DialogContentText>No stuck trades</DialogContentText>
+          )}
+          <Spacer height="20px" />
+          <StuckOrdersTable data={filteredByAddress} />
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={()=> setOpenStuckOrders(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </BootstrapDialog>
+  )
+}

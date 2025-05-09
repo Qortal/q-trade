@@ -69,6 +69,8 @@ import UnsignedFees from "../sell/UnsignedFees";
 import { FeeManager } from "../sell/FeeManager";
 import { Info } from "../sell/Info";
 import { Settings } from "../sell/Settings";
+import { useSetAtom } from "jotai/react";
+import { stuckTradesAtom } from "../../global/state";
 
 const checkIfLocal = async () => {
   try {
@@ -171,6 +173,8 @@ export const Header = ({
   const [amount, setAmount] = useState<string>("");
   const [coinAddresses, setCoinAddresses] = useState({});
   const { isUsingGateway } = useContext(gameContext);
+    const setStuckTrades = useSetAtom(stuckTradesAtom)
+  
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setChecked(false);
@@ -492,6 +496,7 @@ export const Header = ({
             onChange={(e) => {
               setFee(null)
               setSelectedCoin(e.target.value)
+              setStuckTrades([])
             }}
           >
             <MenuItem value={"LITECOIN"}>

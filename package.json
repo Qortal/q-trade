@@ -30,6 +30,7 @@
     "react-qr-code": "^2.0.15",
     "react-router-dom": "^6.23.0",
     "react-toastify": "^10.0.5",
+    "react-virtuoso": "^4.12.7",
     "sass": "^1.76.0",
     "short-unique-id": "^5.2.0",
     "socket.io-client": "^4.7.5"

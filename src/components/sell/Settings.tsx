@@ -52,11 +52,14 @@ export const Settings = () => {
   const [lockingFee, setLockingFee] = useState("");
   const [recommendedFee, setRecommendedFee] = useState("medium_fee_per_kb");
   const [selectedCoin, setSelectedCoin] = useState("LITECOIN");
-
-  const { hideRecommendations, recommendedFeeDisplay, coin } = useRecommendedFees({
-    selectedCoin,
-    recommendedFee
-  });
+ const {
+    isUsingGateway
+  } = useContext(gameContext);
+  const { hideRecommendations, recommendedFeeDisplay, coin } =
+    useRecommendedFees({
+      selectedCoin,
+      recommendedFee,
+    });
 
   const [editLockingFee, setEditLockingFee] = useState("");
   const [openAlert, setOpenAlert] = useState(false);
@@ -85,7 +88,7 @@ export const Settings = () => {
     try {
       let feeToSave = editLockingFee;
       if (recommendedFee !== "custom") {
-        feeToSave = recommendedFeeDisplay
+        feeToSave = recommendedFeeDisplay;
       }
       const response = await qortalRequestWithTimeout(
         {
@@ -183,11 +186,11 @@ export const Settings = () => {
     getSavedSelectedPublisher();
   }, []);
 
-    useEffect(() => {
-      if (hideRecommendations) {
-        setRecommendedFee("custom");
-      }
-    }, [hideRecommendations]);
+  useEffect(() => {
+    if (hideRecommendations) {
+      setRecommendedFee("custom");
+    }
+  }, [hideRecommendations]);
 
   return (
     <>
@@ -218,197 +221,206 @@ export const Settings = () => {
           }}
           open={openModal}
         >
-          <CoinActionContainer
-            sx={{
-              border: "1px solid #3F3F3F",
-              borderRadius: "5px",
-              padding: "5px",
-            }}
-          >
-            <Typography>Locking fees</Typography>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={isEnabledCustomLockingFee}
-                  onChange={handleChange}
-                />
-              }
-              label="Enable custom locking fee"
-            />
-
-            {isEnabledCustomLockingFee && (
-              <>
-               <CoinSelectRow
-                sx={{
-                  gap: "20px",
-                  width: '100%',
-                  justifyContent: 'center'
-                }}
-              >
-                <Select
-                  size="small"
-                  value={selectedCoin}
-                  onChange={(e) => {
-                    setLockingFee("");
-                    setEditLockingFee("");
-                    setSelectedCoin(e.target.value);
-                  }}
-                >
-                  <MenuItem value={"LITECOIN"}>
-                    <SelectRow coin="LTC" />
-                  </MenuItem>
-                  <MenuItem value={"DOGECOIN"}>
-                    <SelectRow coin="DOGE" />
-                  </MenuItem>
-                  <MenuItem value={"BITCOIN"}>
-                    <SelectRow coin="BTC" />
-                  </MenuItem>
-                  <MenuItem value={"DIGIBYTE"}>
-                    <SelectRow coin="DGB" />
-                  </MenuItem>
-                  <MenuItem value={"RAVENCOIN"}>
-                    <SelectRow coin="RVN" />
-                  </MenuItem>
-                  <MenuItem value={"PIRATECHAIN"}>
-                    <SelectRow coin="ARRR" />
-                  </MenuItem>
-                </Select>
-                <Box>
-                 
-                </Box>
-              </CoinSelectRow>
-               <CoinActionRow>
-              <HeaderRow>
-                <Box
-                  sx={{
-                    width: "100%",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
-                  >
-                    <CustomLabel
-                      sx={{
-                        fontSize: "16px",
-                      }}
-                      htmlFor="standard-adornment-name"
-                    >
-                      Recommended fee selection (in sats per kb)
-                    </CustomLabel>
-
-                    <Spacer height="10px" />
-                    <ToggleButtonGroup
-                      color="primary"
-                      value={recommendedFee}
-                      exclusive
-                      onChange={handleChangeRecommended}
-                      aria-label="Platform"
-                    >
-                      {!hideRecommendations && (
-                        <>
-                          <ToggleButton value="low_fee_per_kb">
-                            Low
-                          </ToggleButton>
-                          <ToggleButton value="medium_fee_per_kb">
-                            Medium
-                          </ToggleButton>
-                          <ToggleButton value="high_fee_per_kb">
-                            High
-                          </ToggleButton>
-                        </>
-                      )}
-
-                      <ToggleButton value="custom">Custom</ToggleButton>
-                    </ToggleButtonGroup>
-                  </Box>
-                  {recommendedFeeDisplay && (
-                    <>
-                      <Spacer height="15px" />
-                      <Box
-                        sx={{
-                          width: "100%",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "white",
-                            fontSize: "18px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                            }}
-                          >
-                            {" "}
-                            New fee:
-                          </span>{" "}
-                          {recommendedFeeDisplay}{" "}
-                          sats per kb
-                        </Typography>
-                      </Box>
-                 
-                      <Spacer height="10px" />
-                    </>
-                  )}
-                </Box>
-              </HeaderRow>
-            </CoinActionRow>
-            {recommendedFee === "custom" && (
-              <CoinActionRow>
-                <HeaderRow>
-                  <Box>
-                    <CustomLabel htmlFor="standard-adornment-name">
-                      Custom fee
-                    </CustomLabel>
-                    <Spacer height="5px" />
-                    <CustomInput
-                      id="standard-adornment-name"
-                      type="number"
-                      value={editLockingFee}
-                      onChange={(e) => setEditLockingFee(e.target.value)}
-                      autoComplete="off"
-                    />
-                  </Box>
-                </HeaderRow>
-              </CoinActionRow>
-            )}
-              </>
-            )}
-
-        
-            <ButtonBase
-              onClick={updateLockingFee}
-              disabled={recommendedFee === "custom" && !editLockingFee}
-              sx={{
-                minHeight: "42px",
-                border: "1px solid gray",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                padding: "5px 20px",
-                gap: "10px",
-                borderRadius: "5px",
-                "&:hover": {
-                  border: "1px solid white", // Border color on hover
-                },
-              }}
-            >
-              <ChangeCircleIcon
-                sx={{
-                  color: "white",
-                }}
-              />
-              <Typography>Update locking fee</Typography>
-            </ButtonBase>
-          </CoinActionContainer>
+          {!isUsingGateway && (
+               <CoinActionContainer
+               sx={{
+                 border: "1px solid #3F3F3F",
+                 borderRadius: "5px",
+                 padding: "5px",
+               }}
+             >
+               <Typography>Locking fees</Typography>
+               <FormControlLabel
+                 control={
+                   <Checkbox
+                     checked={isEnabledCustomLockingFee}
+                     onChange={handleChange}
+                   />
+                 }
+                 label="Enable custom locking fee"
+               />
+   
+               {isEnabledCustomLockingFee && (
+                 <>
+                   <CoinSelectRow
+                     sx={{
+                       gap: "20px",
+                       width: "100%",
+                       justifyContent: "center",
+                     }}
+                   >
+                     <Select
+                       size="small"
+                       value={selectedCoin}
+                       onChange={(e) => {
+                         setLockingFee("");
+                         setEditLockingFee("");
+                         setSelectedCoin(e.target.value);
+                       }}
+                     >
+                       <MenuItem value={"LITECOIN"}>
+                         <SelectRow coin="LTC" />
+                       </MenuItem>
+                       <MenuItem value={"DOGECOIN"}>
+                         <SelectRow coin="DOGE" />
+                       </MenuItem>
+                       <MenuItem value={"BITCOIN"}>
+                         <SelectRow coin="BTC" />
+                       </MenuItem>
+                       <MenuItem value={"DIGIBYTE"}>
+                         <SelectRow coin="DGB" />
+                       </MenuItem>
+                       <MenuItem value={"RAVENCOIN"}>
+                         <SelectRow coin="RVN" />
+                       </MenuItem>
+                       <MenuItem value={"PIRATECHAIN"}>
+                         <SelectRow coin="ARRR" />
+                       </MenuItem>
+                     </Select>
+                   </CoinSelectRow>
+                   <CoinSelectRow>
+                     <Box
+                       sx={{
+                         width: "100%",
+                         display: "flex",
+                         flexDirection: "column",
+                         alignItems: "center",
+                       }}
+                     >
+                       <Typography>current fee: {lockingFee}</Typography>
+                     </Box>
+                   </CoinSelectRow>
+                   <CoinActionRow>
+                     <HeaderRow>
+                       <Box
+                         sx={{
+                           width: "100%",
+                         }}
+                       >
+                         <Box
+                           sx={{
+                             width: "100%",
+                             display: "flex",
+                             flexDirection: "column",
+                             alignItems: "center",
+                           }}
+                         >
+                           <CustomLabel
+                             sx={{
+                               fontSize: "16px",
+                             }}
+                             htmlFor="standard-adornment-name"
+                           >
+                             Recommended fee selection (in sats per kb)
+                           </CustomLabel>
+   
+                           <Spacer height="10px" />
+                           <ToggleButtonGroup
+                             color="primary"
+                             value={recommendedFee}
+                             exclusive
+                             onChange={handleChangeRecommended}
+                             aria-label="Platform"
+                           >
+                             {!hideRecommendations && (
+                               <>
+                                 <ToggleButton value="low_fee_per_kb">
+                                   Low
+                                 </ToggleButton>
+                                 <ToggleButton value="medium_fee_per_kb">
+                                   Medium
+                                 </ToggleButton>
+                                 <ToggleButton value="high_fee_per_kb">
+                                   High
+                                 </ToggleButton>
+                               </>
+                             )}
+   
+                             <ToggleButton value="custom">Custom</ToggleButton>
+                           </ToggleButtonGroup>
+                         </Box>
+                         {recommendedFeeDisplay && (
+                           <>
+                             <Spacer height="15px" />
+                             <Box
+                               sx={{
+                                 width: "100%",
+                                 display: "flex",
+                                 justifyContent: "center",
+                               }}
+                             >
+                               <Typography
+                                 sx={{
+                                   color: "white",
+                                   fontSize: "18px",
+                                 }}
+                               >
+                                 <span
+                                   style={{
+                                     fontWeight: "bold",
+                                   }}
+                                 >
+                                   {" "}
+                                   New fee:
+                                 </span>{" "}
+                                 {recommendedFeeDisplay} sats per kb
+                               </Typography>
+                             </Box>
+   
+                             <Spacer height="10px" />
+                           </>
+                         )}
+                       </Box>
+                     </HeaderRow>
+                   </CoinActionRow>
+                   {recommendedFee === "custom" && (
+                     <CoinActionRow>
+                       <HeaderRow>
+                         <Box>
+                           <CustomLabel htmlFor="standard-adornment-name">
+                             Custom fee
+                           </CustomLabel>
+                           <Spacer height="5px" />
+                           <CustomInput
+                             id="standard-adornment-name"
+                             type="number"
+                             value={editLockingFee}
+                             onChange={(e) => setEditLockingFee(e.target.value)}
+                             autoComplete="off"
+                           />
+                         </Box>
+                       </HeaderRow>
+                     </CoinActionRow>
+                   )}
+                 </>
+               )}
+   
+               <ButtonBase
+                 onClick={updateLockingFee}
+                 disabled={recommendedFee === "custom" && !editLockingFee}
+                 sx={{
+                   minHeight: "42px",
+                   border: "1px solid gray",
+                   color: "white",
+                   display: "flex",
+                   alignItems: "center",
+                   padding: "5px 20px",
+                   gap: "10px",
+                   borderRadius: "5px",
+                   "&:hover": {
+                     border: "1px solid white", // Border color on hover
+                   },
+                 }}
+               >
+                 <ChangeCircleIcon
+                   sx={{
+                     color: "white",
+                   }}
+                 />
+                 <Typography>Update locking fee</Typography>
+               </ButtonBase>
+             </CoinActionContainer>
+          )}
           <Spacer height="20px" />
           <CoinActionContainer
             sx={{

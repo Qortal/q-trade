@@ -83,7 +83,10 @@ export const FeeManager = ({ selectedCoin, setFee, fee }) => {
   const [openModal, setOpenModal] = useState(false);
   const [recommendedFee, setRecommendedFee] = useState("medium_fee_per_kb");
 
-const {hideRecommendations, recommendedFeeDisplay} = useRecommendedFees({selectedCoin, recommendedFee})
+  const { hideRecommendations, recommendedFeeDisplay } = useRecommendedFees({
+    selectedCoin,
+    recommendedFee,
+  });
 
   const [openAlert, setOpenAlert] = useState(false);
   const [info, setInfo] = useState<any>(null);
@@ -143,10 +146,6 @@ const {hideRecommendations, recommendedFeeDisplay} = useRecommendedFees({selecte
     establishUpdateFeeForm(coin);
   }, [coin, establishUpdateFeeForm]);
 
-
-
-
-
   useEffect(() => {
     if (hideRecommendations) {
       setRecommendedFee("custom");
@@ -158,13 +157,12 @@ const {hideRecommendations, recommendedFeeDisplay} = useRecommendedFees({selecte
     const typeRequestLocking = "feekb";
 
     try {
-      
       let feeToSave = editFee;
       if (recommendedFee !== "custom") {
         feeToSave = calculateFeeFromRate(recommendedFeeDisplay, 300);
       }
-      if(+fee === +feeToSave){
-        return
+      if (+fee === +feeToSave) {
+        return;
       }
       const response = await qortalRequestWithTimeout(
         {
@@ -214,8 +212,6 @@ const {hideRecommendations, recommendedFeeDisplay} = useRecommendedFees({selecte
       setRecommendedFee(newAlignment);
     }
   };
-
-
 
   if (fee === null || fee === undefined) return;
   return (
@@ -273,6 +269,18 @@ const {hideRecommendations, recommendedFeeDisplay} = useRecommendedFees({selecte
                   Update unlocking fee for {selectedCoin}
                 </Typography>
               </HeaderRow>
+            </CoinActionRow>
+            <CoinActionRow>
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Typography>current fee: {fee}</Typography>
+              </Box>
             </CoinActionRow>
             <CoinActionRow>
               <HeaderRow>
