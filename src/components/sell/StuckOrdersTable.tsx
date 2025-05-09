@@ -19,12 +19,15 @@ import {
 } from "qapp-core";
 import { formatTimestampForum } from "../../utils/formatTime";
 
-interface NameData {
-  name: string;
-  isSelling?: boolean;
+interface AtData {
+  qortAmount:  number;
+  foreignBlockchain: string;
+  foreignAmount: number;
+  qortalAtAddress: string;
+  timestamp: number
 }
 
-const VirtuosoTableComponents: TableComponents<NameData> = {
+const VirtuosoTableComponents: TableComponents<AtData> = {
   Scroller: forwardRef<HTMLDivElement>((props, ref) => (
     <TableContainer component={Paper} {...props} ref={ref} />
   )),
@@ -53,8 +56,8 @@ function fixedHeaderContent() {
   );
 }
 
-function rowContent(_index: number, row: NameData) {
-  const cancelSell = async (name: string) => {
+function rowContent(_index: number, row: AtData) {
+  const cancelSell = async () => {
     const loadId = showLoading("Attempting to cancel sell...please wait");
 
     try {
@@ -90,7 +93,7 @@ function rowContent(_index: number, row: NameData) {
         <Button
           variant="contained"
           size="small"
-          onClick={() => cancelSell(row.name)}
+          onClick={() => cancelSell()}
         >
           Cancel sell
         </Button>
