@@ -440,7 +440,7 @@ export const TradeOffers: React.FC<any> = ({
     };
   }, []);
 
-  const processOffersWithPresence = () => {
+  const processOffersWithPresence = useCallback(() => {
     if (offeringTrades.current === null) return;
     async function asyncForEach(array: any, callback: any) {
       for (let index = 0; index < array.length; index++) {
@@ -496,7 +496,7 @@ export const TradeOffers: React.FC<any> = ({
     };
 
     startOfferPresenceMapping();
-  };
+  },[setStuckTrades]);
 
   const restartTradeOffersWebSocket = () => {
     setTimeout(() => initTradeOffersWebSocket(true), 50);
@@ -543,8 +543,44 @@ export const TradeOffers: React.FC<any> = ({
     };
   };
 
-  const initTradeOffersWebSocket = (restarted = false) => {
+  const fetchOffers = useCallback(async (selectedCoin) => {
+    try {
+      
+      const response = await fetch(
+        `/crosschain/tradeoffers?foreignBlockchain=${selectedCoin}&includeHistoric=true`
+      );
+      const data = await response.json();
+      const transformed = data.map(item => ({
+        qortalAtAddress: item.qortalAtAddress,
+        qortalCreator: item.qortalCreator,
+        qortalCreatorTradeAddress: item.qortalCreatorTradeAddress,
+        qortAmount: item.qortAmount,
+        btcAmount: item.expectedBitcoin ?? item.btcAmount, // fallback if already correct
+        foreignAmount: item.expectedForeignAmount ?? item.foreignAmount,
+        tradeTimeout: item.tradeTimeout,
+        mode: item.mode,
+        timestamp: item.timestamp ?? item.creationTimestamp,
+        foreignBlockchain: item.foreignBlockchain,
+        acctName: item.acctName
+      }));
+      
+      console.log('data', data)
+      offeringTrades.current = [
+        ...transformed?.filter(
+          (coin) => coin?.foreignBlockchain === selectedCoin && coin?.mode === 'OFFERING'
+        ),
+      ];
+      processOffersWithPresence();
+    } catch (error) {
+      console.error(error)
+    }
+  },[]);
+
+  const initTradeOffersWebSocket = async (restarted = false) => {
     if (socketRef.current) return;
+    if(restarted === false){
+      await fetchOffers(selectedCoin)
+    }
     let socketTimeout: any;
 
     let socketLink;
@@ -587,6 +623,9 @@ export const TradeOffers: React.FC<any> = ({
       socketTimeout = setTimeout(pingSocket, 295000);
     };
   };
+
+
+ 
 
   useEffect(() => {
     if (isUsingGateway === null) return;

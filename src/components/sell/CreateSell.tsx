@@ -356,8 +356,15 @@ export const CreateSell = ({ qortAddress, show }) => {
 const StuckOrders = ({setOpenStuckOrders})=> {
     const [stuckTrades] = useAtom(stuckTradesAtom)
     const address = useGlobal().auth.address
-  const filteredByAddress = stuckTrades?.filter((item)=> item?.qortalCreator === address)
-
+    const filteredByAddress = stuckTrades
+    ?.filter((item) => item?.qortalCreator === address)
+    .sort((a, b) => {
+      const timestampA = a?.timestamp ?? a?.creationTimestamp ?? 0;
+      const timestampB = b?.timestamp ?? b?.creationTimestamp ?? 0;
+      return timestampB - timestampA; // Newest first
+    });
+  
+  console.log('filteredByAddress', filteredByAddress)
   return (
     <BootstrapDialog
         aria-labelledby="customized-dialog-title"

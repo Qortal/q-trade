@@ -24,7 +24,8 @@ interface AtData {
   foreignBlockchain: string;
   foreignAmount: number;
   qortalAtAddress: string;
-  timestamp: number
+  timestamp?: number
+  creationTimestamp?: number
 }
 
 const VirtuosoTableComponents: TableComponents<AtData> = {
@@ -87,7 +88,7 @@ function rowContent(_index: number, row: AtData) {
 
   return (
     <>
-      <TableCell>{formatTimestampForum(row?.timestamp)}</TableCell>
+      <TableCell>{formatTimestampForum(row?.timestamp || row?.creationTimestamp)}</TableCell>
       <TableCell>{row?.qortAmount}</TableCell>
       <TableCell>
         <Button
