@@ -443,8 +443,8 @@ export const Settings = () => {
               <MenuItem value={"Foreign-Fee-Publisher"}>
                 <SelectRow coin="Foreign-Fee-Publisher" />
               </MenuItem>
-              <MenuItem value={"Ice.JSON"}>
-                <SelectRow coin="Ice.JSON" />
+              <MenuItem value={"JSON.Bridge"}>
+                <SelectRow coin="JSON.Bridge" />
               </MenuItem>
             </Select>
           </CoinActionContainer>

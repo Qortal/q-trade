@@ -2,7 +2,7 @@ import { atomWithReset } from 'jotai/utils';
 
 
 
-export const selectedFeePublisherAtom = atomWithReset('Ice.JSON');
+export const selectedFeePublisherAtom = atomWithReset('JSON.Bridge');
 
 export const isEnabledCustomLockingFeeAtom = atomWithReset(false);
 
