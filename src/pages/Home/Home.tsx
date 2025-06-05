@@ -61,7 +61,7 @@ export const HomePage = () => {
         <TabsContainer>
           <TabsRow>
             <Tab activeTab={mode === "buy"} onClick={() => setMode("buy")}>
-              Buy QORT
+              QORT for sale
             </Tab>
             {/* <TabDivider activeTab={mode === "buy" || mode === "sell"} /> */}
             <Tab activeTab={mode === "sell"} onClick={() => setMode("sell")}>

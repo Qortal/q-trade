@@ -518,7 +518,7 @@ export const Header = ({
               <SelectRow coin="ARRR" />
             </MenuItem>
           </Select>
-          <Info />
+          {/* <Info /> */}
           {!isUsingGateway && selectedCoin !== 'PIRATECHAIN' && (
             <>
               <FeeManager selectedCoin={selectedCoin} fee={fee}

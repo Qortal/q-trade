@@ -37,6 +37,7 @@ import {
   SnackbarCloseReason,
   Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 import gameContext from "../../contexts/gameContext";
 import { subscribeToEvent, unsubscribeFromEvent } from "../../utils/events";
@@ -164,7 +165,12 @@ export const TradeOffers: React.FC<any> = ({
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<any>(null);
   const BuyButton = () => {
-    return <BuyOrderBtn onClick={buyOrder}>BUY</BuyOrderBtn>;
+    return <BuyOrderBtn disabled={selectedOffers?.length === 0} sx={{
+      transition: '0.3s background-color',
+      '&:hover': {
+        backgroundColor: '#1b5e20',
+      },
+    }} onClick={buyOrder}>BUY</BuyOrderBtn>;
   };
 
   const intervalGetSignedUnlockingFees = useRef<number | null>(null);
