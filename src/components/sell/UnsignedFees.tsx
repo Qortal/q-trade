@@ -48,7 +48,24 @@ export default function UnsignedFees({ qortAddress }) {
     }
   }, [qortAddress]);
 
+    const getUnsignedFees = useCallback(async (address)=> {
+   try {
+    const url = `/crosschain/unsignedfees/${address}`
+    const res = await fetch(url)
+    const data = await res.json()
+    if(data && data.length > 0){
+      setIsPositive(true)
+    } else {
+      setIsPositive(false)
+    }
+   } catch (error) {
+    console.error(error)
+   }
+  }, [])
+
+
   const restartUnsignedFeeSocket = () => {
+    getUnsignedFees()
     setTimeout(() => initUnsignedFeeSocket(true), 50);
   };
 
@@ -100,20 +117,6 @@ export default function UnsignedFees({ qortAddress }) {
     };
   };
 
-  const getUnsignedFees = useCallback(async (address)=> {
-   try {
-    const url = `/crosschain/unsignedfees/${address}`
-    const res = await fetch(url)
-    const data = await res.json()
-    if(data && data.length > 0){
-      setIsPositive(true)
-    } else {
-      setIsPositive(false)
-    }
-   } catch (error) {
-    console.error(error)
-   }
-  }, [])
 
   useEffect(() => {
     if (!qortAddress) return;

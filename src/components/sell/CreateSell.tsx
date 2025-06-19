@@ -364,7 +364,6 @@ const StuckOrders = ({setOpenStuckOrders})=> {
       return timestampB - timestampA; // Newest first
     });
   
-  console.log('filteredByAddress', filteredByAddress)
   return (
     <BootstrapDialog
         aria-labelledby="customized-dialog-title"

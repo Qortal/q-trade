@@ -570,7 +570,6 @@ export const TradeOffers: React.FC<any> = ({
         acctName: item.acctName
       }));
       
-      console.log('data', data)
       offeringTrades.current = [
         ...transformed?.filter(
           (coin) => coin?.foreignBlockchain === selectedCoin && coin?.mode === 'OFFERING'
