@@ -778,6 +778,9 @@ export const TradeOffers: React.FC<any> = ({
       //   message: "Attempting to submit buy order. Please wait..."
       // })
       const listOfATs = offersWithKnownFees;
+      if(listOfATs?.length === 0){
+        throw new Error('No buy orders selected')
+      }
       const response = await qortalRequestWithTimeout(
         {
           action: "CREATE_TRADE_BUY_ORDER",
@@ -786,7 +789,6 @@ export const TradeOffers: React.FC<any> = ({
         },
         900000
       );
-
       if (response?.error) {
         setIsShowBuyInProgress({
           status: "error",
