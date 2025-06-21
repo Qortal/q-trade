@@ -64,8 +64,8 @@ export default function UnsignedFees({ qortAddress }) {
   }, [])
 
 
-  const restartUnsignedFeeSocket = () => {
-    getUnsignedFees()
+  const restartUnsignedFeeSocket = (address) => {
+    getUnsignedFees(address)
     setTimeout(() => initUnsignedFeeSocket(true), 50);
   };
 
@@ -106,7 +106,7 @@ export default function UnsignedFees({ qortAddress }) {
       if (event.reason === "forced") {
         return;
       }
-      restartUnsignedFeeSocket();
+      restartUnsignedFeeSocket(qortAddressRef.current);
     };
     socketRef.current.onerror = (e) => {
       clearTimeout(socketTimeout);

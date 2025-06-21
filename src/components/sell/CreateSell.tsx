@@ -363,7 +363,6 @@ const StuckOrders = ({setOpenStuckOrders})=> {
       const timestampB = b?.timestamp ?? b?.creationTimestamp ?? 0;
       return timestampB - timestampA; // Newest first
     });
-  
   return (
     <BootstrapDialog
         aria-labelledby="customized-dialog-title"

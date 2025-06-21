@@ -167,7 +167,6 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
     setTradeBotList(sellTrades);
     tradeBotListRef.current = sellTrades;
   };
-
   const restartTradeOffers = () => {
     if (socketRef.current) {
       socketRef.current.close(1000, "forced"); // Close with a custom reason

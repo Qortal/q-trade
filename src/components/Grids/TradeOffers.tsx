@@ -57,7 +57,7 @@ import {
 
 export const baseLocalHost = window.location.host;
 // export const baseLocalHost = "devnet-nodes.qortal.link:11111";
-// export const baseLocalHost = "127.0.0.1:12391";
+// export const baseLocalHost = "127.0.0.1:22391";
 
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -208,15 +208,15 @@ export const TradeOffers: React.FC<any> = ({
       isFetchingName.current[address] = true
      const response = await requestQueueGetNames.enqueue(
         () => {
-          return fetch("/names/address/" + address);
+          return fetch("/names/primary/" + address);
         }
       );
       const nameData = await response.json();
-      if (nameData?.length > 0) {
+      if (nameData?.name) {
         setQortalNames((prev) => {
           return {
             ...prev,
-            [address]: nameData[0].name,
+            [address]: nameData.name,
           };
         });
       } else {
@@ -476,7 +476,15 @@ export const TradeOffers: React.FC<any> = ({
           }
         }
       }
-
+      offeringTrades.current = Object.values(
+  offeringTrades.current.reduce((acc, trade) => {
+    const key = trade.qortalAtAddress;
+    if (!acc[key] || trade.timestamp > acc[key].timestamp) {
+      acc[key] = trade;
+    }
+    return acc;
+  }, {} as Record<string, typeof offeringTrades.current[number]>)
+);
       let filteredOffers =
         offeringTrades.current?.filter((offeringTrade) =>
           filterOffersUsingTradePresence(offeringTrade)

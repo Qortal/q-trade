@@ -37,13 +37,13 @@ export default function HistoryList({ qortAddress, historyList }) {
 
   const getName = async (address) => {
     try {
-      const response = await fetch("/names/address/" + address);
+      const response = await fetch("/names/primary/" + address);
       const nameData = await response.json();
-      if (nameData?.length > 0) {
+      if (nameData?.name) {
         setQortalNames((prev) => {
           return {
             ...prev,
-            [address]: nameData[0].name,
+            [address]: nameData.name,
           };
         });
       } else {
