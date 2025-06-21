@@ -103,8 +103,8 @@ export const CustomInput = styled(TextField)({
 export const CreateSell = ({ qortAddress, show }) => {
   const [open, setOpen] = React.useState(false);
   const [openStuckOrders, setOpenStuckOrders] = React.useState(false);
-  const [qortAmount, setQortAmount] = React.useState(0);
-  const [foreignAmount, setForeignAmount] = React.useState(0);
+  const [qortAmount, setQortAmount] = React.useState('');
+  const [foreignAmount, setForeignAmount] = React.useState<string>('');
   const {
     updateTemporaryFailedTradeBots,
     sellOrders,
@@ -120,8 +120,8 @@ export const CreateSell = ({ qortAddress, show }) => {
   };
   const handleClose = () => {
     setOpen(false);
-    setForeignAmount(0);
-    setQortAmount(0);
+    setForeignAmount('');
+    setQortAmount('');
   };
 
   const createSellOrder = async () => {
@@ -133,9 +133,9 @@ export const CreateSell = ({ qortAddress, show }) => {
       const res = await qortalRequestWithTimeout(
         {
           action: "CREATE_TRADE_SELL_ORDER",
-          qortAmount,
+          qortAmount: +qortAmount,
           foreignBlockchain: selectedCoin,
-          foreignAmount: qortAmount * foreignAmount,
+          foreignAmount: +qortAmount * +foreignAmount,
         },
         900000
       );
@@ -155,8 +155,8 @@ export const CreateSell = ({ qortAddress, show }) => {
       }
       if (!res?.error) {
         setOpenAlert(true);
-        setForeignAmount(0);
-        setQortAmount(0);
+        setForeignAmount('');
+        setQortAmount('');
         setOpen(false);
 
         setInfo({
@@ -281,7 +281,13 @@ export const CreateSell = ({ qortAddress, show }) => {
               id="standard-adornment-name"
               type="number"
               value={qortAmount}
-              onChange={(e) => setQortAmount(+e.target.value)}
+               onChange={(e) => {
+                const value = e.target.value;
+                const regex = /^\d*\.?\d{0,8}$/; // allows up to 8 decimal places
+                if (value === '' || regex.test(value)) {
+                  setQortAmount(value);
+                }
+              }}
               autoComplete="off"
             />
             <Spacer height="15px" />
@@ -293,13 +299,19 @@ export const CreateSell = ({ qortAddress, show }) => {
               id="standard-adornment-amount"
               type="number"
               value={foreignAmount}
-              onChange={(e) => setForeignAmount(+e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                const regex = /^\d*\.?\d{0,8}$/; // allows up to 8 decimal places
+                if (value === '' || regex.test(value)) {
+                  setForeignAmount(value);
+                }
+              }}
               autoComplete="off"
             />
             <Spacer height="15px" />
             <Typography>
-              {`${qortAmount * foreignAmount} ${getCoinLabel()}`} for{" "}
-              {qortAmount} QORT
+              {`${Number(+qortAmount * +foreignAmount)?.toFixed(8)} ${getCoinLabel()}`} for{" "}
+              {qortAmount || 0} QORT
             </Typography>
             <Typography
               sx={{
@@ -320,7 +332,7 @@ export const CreateSell = ({ qortAddress, show }) => {
             disabled={
               !qortAmount ||
               !(
-                qortAmount * foreignAmount >
+                +qortAmount * +foreignAmount >
                 minimumAmountSellTrades[selectedCoin]?.value
               )
             }
