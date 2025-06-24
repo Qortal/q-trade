@@ -55,9 +55,9 @@ import {
   MainContainer,
 } from "./Table-styles";
 
-// export const baseLocalHost = window.location.host;
+export const baseLocalHost = window.location.host;
 // export const baseLocalHost = "devnet-nodes.qortal.link:11111";
-export const baseLocalHost = "127.0.0.1:22391";
+// export const baseLocalHost = "127.0.0.1:22391";
 
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
