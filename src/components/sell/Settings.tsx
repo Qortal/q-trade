@@ -273,9 +273,6 @@ export const Settings = () => {
                        <MenuItem value={"RAVENCOIN"}>
                          <SelectRow coin="RVN" />
                        </MenuItem>
-                       <MenuItem value={"PIRATECHAIN"}>
-                         <SelectRow coin="ARRR" />
-                       </MenuItem>
                      </Select>
                    </CoinSelectRow>
                    <CoinSelectRow>

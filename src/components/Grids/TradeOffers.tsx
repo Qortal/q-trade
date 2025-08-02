@@ -57,7 +57,7 @@ import {
 
 export const baseLocalHost = window.location.host;
 // export const baseLocalHost = "devnet-nodes.qortal.link:11111";
-// export const baseLocalHost = "127.0.0.1:22391";
+// export const baseLocalHost = "127.0.0.1:12391";
 
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -102,6 +102,7 @@ export const TradeOffers: React.FC<any> = ({
   const [signedUnlockingFees, setSignedUnlockingFees] = useState(null);
   const [qortalNames, setQortalNames] = useState({});
   const setStuckTrades = useSetAtom(stuckTradesAtom)
+  const selectedCoinRef = useRef(null)
   const {
     fetchOngoingTransactions,
     onGoingTrades,
@@ -242,6 +243,14 @@ export const TradeOffers: React.FC<any> = ({
     setSelectedOffer(null);
   };
 
+  useEffect(()=> {
+selectedCoinRef.current = selectedCoin
+if(gridRef.current){
+   gridRef.current.api.refreshCells({ force: true });
+}
+
+  }, [selectedCoin])
+
   const restartPresence = () => {
     if (socketPresenceRef.current) {
       socketPresenceRef.current.close(1000, "forced"); // Close with a custom reason
@@ -255,111 +264,117 @@ export const TradeOffers: React.FC<any> = ({
       (item) => item?.atAddress === params.data.qortalAtAddress
     );
     if (!hasSignedFee) selectable = true;
-
-    if (hasSignedFee && hasSignedFee?.fee > feeRef.current)
+    if (hasSignedFee && hasSignedFee?.fee > feeRef.current && selectedCoin !== "PIRATECHAIN")
       selectable = false;
     if(!selectable)return  'Your unlocking fee is to low to buy this order, Increase your fee to purchase'
 
     return ''
   };
 
-  const columnDefs: ColDef[] = useMemo(() => {
-    return [
-      {
-        headerCheckboxSelection: true, // Adds a checkbox in the header for selecting all rows
-        // checkboxSelection: true, // Adds checkboxes in each row for selection
-        checkboxSelection: true, // disable default, we're rendering it manually
-        headerName: "", // You can customize the header name
-        width: 100, // Adjust the width as needed
-        pinned: "left", // Optional, to pin this column on the left
-        resizable: false,
-        suppressRowClickSelection: true,
-        tooltipValueGetter: rowTooltip,
-        cellRenderer: (params) => (
-          <SelectWithInfoCell
-            {...params}
-            selectTradeForDetails={() => {
-              const hasSignedFee = signedUnlockingFees?.find(
-                (item) =>
-                  item?.atAddress === params?.node?.data?.qortalAtAddress
-              );
-              let fee = null;
-              if (hasSignedFee) {
-                fee = hasSignedFee.fee;
-              }
-
-              setOpenShowOfferDetails({ ...(params?.node?.data || {}), fee });
-            }}
-          />
-        ),
-        // suppressRowClickSelection: true, // prevent whole row selection on click
-      },
-      {
-        headerName: "QORT AMOUNT",
-        field: "qortAmount",
-        flex: 1, // Flex makes this column responsive
-        minWidth: 150, // Ensure it doesn't shrink too much
-        resizable: true,
-        tooltipValueGetter: rowTooltip
-      },
-      {
-        headerName: `${getCoinLabel()}/QORT`,
-        valueGetter: (params) =>
-          +params.data.foreignAmount / +params.data.qortAmount,
-        sortable: true,
-        sort: "asc",
-        flex: 1, // Flex makes this column responsive
-        minWidth: 150, // Ensure it doesn't shrink too much
-        resizable: true,
-        tooltipValueGetter: rowTooltip
-      },
-      {
-        headerName: `Total ${getCoinLabel()} Value`,
-        field: "foreignAmount",
-        flex: 1, // Flex makes this column responsive
-        minWidth: 150, // Ensure it doesn't shrink too much
-        resizable: true,
-        tooltipValueGetter: rowTooltip
-      },
-      {
-        headerName: `Unlocking fee`,
-        flex: 1, // Flex makes this column responsive
-        minWidth: 150, // Ensure it doesn't shrink too much
-        resizable: true,
-        tooltipValueGetter: rowTooltip,
-        valueGetter: (params) => {
-          if (params?.data?.qortalAtAddress) {
+const columnDefs: ColDef[] = useMemo(() => {
+  const baseColumns: ColDef[] = [
+    {
+      headerCheckboxSelection: true,
+      checkboxSelection: true,
+      headerName: "",
+      width: 100,
+      pinned: "left",
+      resizable: false,
+      // @ts-ignore
+      suppressRowClickSelection: true,
+      tooltipValueGetter: rowTooltip,
+      cellRenderer: (params) => (
+        <SelectWithInfoCell
+          {...params}
+          selectTradeForDetails={() => {
             const hasSignedFee = signedUnlockingFees?.find(
-              (item) => item?.atAddress === params.data.qortalAtAddress
+              (item) =>
+                item?.atAddress === params?.node?.data?.qortalAtAddress
             );
-            if (!hasSignedFee) return "Unknown";
-            return hasSignedFee.fee;
-          } else return "Unknown";
-        },
-      },
-      {
-        headerName: "Seller",
-        field: "qortalCreator",
-        flex: 1, // Flex makes this column responsive
-        minWidth: 300, // Ensure it doesn't shrink too much
-        resizable: true,
-        tooltipValueGetter: rowTooltip,
-        valueGetter: (params) => {
-          if (params?.data?.qortalCreator) {
-            if (qortalNames[params?.data?.qortalCreator]) {
-              return qortalNames[params?.data?.qortalCreator];
-            } else if (qortalNames[params?.data?.qortalCreator] === undefined) {
-              getName(params?.data?.qortalCreator);
-
-              return params?.data?.qortalCreator;
-            } else {
-              return params?.data?.qortalCreator;
+            let fee = null;
+            if (hasSignedFee) {
+              fee = hasSignedFee.fee;
             }
-          }
-        },
+
+            setOpenShowOfferDetails({ ...(params?.node?.data || {}), fee });
+          }}
+        />
+      ),
+    },
+    {
+      headerName: "QORT AMOUNT",
+      field: "qortAmount",
+      flex: 1,
+      minWidth: 150,
+      resizable: true,
+      tooltipValueGetter: rowTooltip
+    },
+    {
+      headerName: `${getCoinLabel()}/QORT`,
+      valueGetter: (params) =>
+        +params.data.foreignAmount / +params.data.qortAmount,
+      sortable: true,
+      sort: "asc",
+      flex: 1,
+      minWidth: 150,
+      resizable: true,
+      tooltipValueGetter: rowTooltip
+    },
+    {
+      headerName: `Total ${getCoinLabel()} Value`,
+      field: "foreignAmount",
+      flex: 1,
+      minWidth: 150,
+      resizable: true,
+      tooltipValueGetter: rowTooltip
+    },
+  ];
+
+  // Conditionally insert the "Unlocking fee" column
+  if (selectedCoinRef.current !== 'PIRATECHAIN') {
+    baseColumns.push({
+      headerName: `Unlocking fee`,
+      flex: 1,
+      minWidth: 150,
+      resizable: true,
+      tooltipValueGetter: rowTooltip,
+      valueGetter: (params) => {
+        if (params?.data?.qortalAtAddress) {
+          const hasSignedFee = signedUnlockingFees?.find(
+            (item) => item?.atAddress === params.data.qortalAtAddress
+          );
+          if (!hasSignedFee) return "Unknown";
+          return hasSignedFee.fee;
+        } else return "Unknown";
       },
-    ];
-  }, [qortalNames, getCoinLabel, signedUnlockingFees]);
+    });
+  }
+
+  // Final column (Seller)
+  baseColumns.push({
+    headerName: "Seller",
+    field: "qortalCreator",
+    flex: 1,
+    minWidth: 300,
+    resizable: true,
+    tooltipValueGetter: rowTooltip,
+    valueGetter: (params) => {
+      if (params?.data?.qortalCreator) {
+        if (qortalNames[params?.data?.qortalCreator]) {
+          return qortalNames[params?.data?.qortalCreator];
+        } else if (qortalNames[params?.data?.qortalCreator] === undefined) {
+          getName(params?.data?.qortalCreator);
+          return params?.data?.qortalCreator;
+        } else {
+          return params?.data?.qortalCreator;
+        }
+      }
+    },
+  });
+
+  return baseColumns;
+}, [qortalNames, getCoinLabel, signedUnlockingFees, selectedCoinRef.current]);
+
 
   // const onRowClicked = (event: any) => {
   //   if(listOfOngoingTradesAts.includes(event.data.qortalAtAddress)) return
@@ -978,6 +993,7 @@ export const TradeOffers: React.FC<any> = ({
           enableBrowserTooltips={true}
           gridOptions={{
             isRowSelectable: (params) => {
+              if(selectedCoinRef.current === 'PIRATECHAIN') return true
               let selectable = true;
               const hasSignedFee = signedUnlockingFeesRef.current?.find(
                 (item) => item?.atAddress === params.data.qortalAtAddress

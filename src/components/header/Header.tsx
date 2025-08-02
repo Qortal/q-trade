@@ -377,7 +377,10 @@ export const Header = ({
             gap: '10px'
           }}>
              <Terms />
-            <Settings />
+             {!isUsingGateway && (
+               <Settings />
+             )}
+           
           </Box>
          
         </Box>
