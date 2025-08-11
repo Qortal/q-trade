@@ -44,7 +44,7 @@ import { subscribeToEvent, unsubscribeFromEvent } from "../../utils/events";
 import { useModal } from "../common/useModal";
 import FileSaver from "file-saver";
 import { Spacer } from "../common/Spacer";
-import { Hourglass } from "react-loader-spinner";
+import { FallingLines, Hourglass } from "react-loader-spinner";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
@@ -111,6 +111,7 @@ export const TradeOffers: React.FC<any> = ({
     getCoinLabel,
     selectedCoin,
   } = useContext(gameContext);
+  const controllerRef = useRef(null)
   const isRemoveOrdersWithoutUnlockingFees = useRef(false);
   const [isRemoveOrders, setIsRemoveOrders] = useState('remove');
   const updateFee = useUpdateFee({setFee, selectedCoin})
@@ -165,6 +166,8 @@ export const TradeOffers: React.FC<any> = ({
   const [openShowOfferDetails, setOpenShowOfferDetails] = useState(null);
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<any>(null);
+  const [hasTradePresence, setHasTradePresence] = useState(false)
+  const [isLoadingTrades, setIsLoadingTrades] = useState(true)
   const BuyButton = () => {
     return <BuyOrderBtn disabled={selectedOffers?.length === 0} sx={{
       transition: '0.3s background-color',
@@ -241,12 +244,15 @@ export const TradeOffers: React.FC<any> = ({
     offeringTrades.current = [];
     setOffers([]);
     setSelectedOffer(null);
+    if(gridRef.current){
+   gridRef.current?.api?.refreshCells({ force: true });
+}
   };
 
   useEffect(()=> {
 selectedCoinRef.current = selectedCoin
 if(gridRef.current){
-   gridRef.current.api.refreshCells({ force: true });
+   gridRef.current?.api?.refreshCells({ force: true });
 }
 
   }, [selectedCoin])
@@ -553,6 +559,7 @@ const columnDefs: ColDef[] = useMemo(() => {
         : [...tradePresenceTxns.current, ...JSON.parse(e.data)];
       initiatedFetchPresenceSocket.current = true;
       processOffersWithPresence();
+      setHasTradePresence(true)
       restarted = false;
     };
     socketPresenceRef.current.onclose = (event) => {
@@ -574,11 +581,22 @@ const columnDefs: ColDef[] = useMemo(() => {
 
   const fetchOffers = useCallback(async (selectedCoin) => {
     try {
-      
+       if(selectedCoinRef.current !== selectedCoin) return
+      setIsLoadingTrades(true)
+      if(controllerRef.current){
+       try {
+          controllerRef.current?.abort();
+       } catch (error) {
+        console.error('failed to abort')
+       }
+      }
+       controllerRef.current = new AbortController();
       const response = await fetch(
-        `/crosschain/tradeoffers?foreignBlockchain=${selectedCoin}&includeHistoric=true`
+        `/crosschain/tradeoffers?foreignBlockchain=${selectedCoin}&includeHistoric=true`, { signal: controllerRef.current.signal}
       );
+    
       const data = await response.json();
+
       const transformed = data.map(item => ({
         qortalAtAddress: item.qortalAtAddress,
         qortalCreator: item.qortalCreator,
@@ -592,16 +610,17 @@ const columnDefs: ColDef[] = useMemo(() => {
         foreignBlockchain: item.foreignBlockchain,
         acctName: item.acctName
       }));
-      
+      if(selectedCoinRef.current !== selectedCoin) return
       offeringTrades.current = [
         ...transformed?.filter(
           (coin) => coin?.foreignBlockchain === selectedCoin && coin?.mode === 'OFFERING'
         ),
       ];
       processOffersWithPresence();
+       setIsLoadingTrades(false)
     } catch (error) {
       console.error(error)
-    }
+    } 
   },[]);
 
   const initTradeOffersWebSocket = async (restarted = false) => {
@@ -624,6 +643,7 @@ const columnDefs: ColDef[] = useMemo(() => {
       setTimeout(pingSocket, 50);
     };
     socketRef.current.onmessage = (e) => {
+      if(selectedCoinRef.current !== selectedCoin) return
       offeringTrades.current = [
         ...offeringTrades.current?.filter(
           (coin) => coin?.foreignBlockchain === selectedCoin && coin?.mode === 'OFFERING'
@@ -777,7 +797,7 @@ const columnDefs: ColDef[] = useMemo(() => {
         .map(o => o.fee as number)
     )
   : 0;
-    if(highestFee < fee){
+    if(highestFee < fee && selectedCoin !== "PIRATECHAIN"){
 
       await showAskToUpdateFee({
         message: highestFee
@@ -922,10 +942,13 @@ const columnDefs: ColDef[] = useMemo(() => {
 
   const onGridReady = useCallback((params: any) => {
     params.api.sizeColumnsToFit(); // Adjust columns to fit the grid width
-    const allColumnIds = params.columnApi
-      .getAllColumns()
-      .map((col: any) => col.getColId());
+    const allColumnIds = params?.columnApi
+      ?.getAllColumns()
+      ?.map((col: any) => col?.getColId());
+      if(allColumnIds){
     params.columnApi.autoSizeColumns(allColumnIds); // Automatically adjust the width to fit content
+
+      }
   }, []);
 
   const handleClose = (
@@ -959,7 +982,7 @@ const columnDefs: ColDef[] = useMemo(() => {
       });
 
       // Optional: refresh selection/checkbox visuals
-      gridRef.current.api.refreshCells({ force: true });
+      gridRef.current?.api?.refreshCells({ force: true });
     }
   }, [signedUnlockingFees, fee]);
 
@@ -972,7 +995,24 @@ const columnDefs: ColDef[] = useMemo(() => {
         className="ag-theme-alpine-dark"
         style={{ height: 400, width: "100%" }}
       >
-        <AgGridReact
+        {(isLoadingTrades || !hasTradePresence) && (
+          <Box sx={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '20px'
+          }}>
+            <Typography>Loading Trades</Typography>
+          <FallingLines color="white" width="30" visible={true} />
+
+          </Box>
+        )}
+        <Box sx={{
+          width: '100%',
+          visibility: (isLoadingTrades || !hasTradePresence) ? 'hidden' : 'visible',
+          height: '100%'
+        }}>
+<AgGridReact
           ref={gridRef}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
@@ -1006,6 +1046,8 @@ const columnDefs: ColDef[] = useMemo(() => {
             },
           }}
         />
+      </Box>
+        
         {/* {selectedOffer && (
         <Button onClick={buyOrder}>Buy</Button>
 
