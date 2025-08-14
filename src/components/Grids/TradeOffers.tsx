@@ -967,7 +967,7 @@ const columnDefs: ColDef[] = useMemo(() => {
     signedUnlockingFeesRef.current = signedUnlockingFees;
     feeRef.current = fee;
 
-    if (gridRef.current?.api) {
+    if (gridRef.current?.api && selectedCoinRef.current !== 'PIRATECHAIN') {
 
       gridRef.current.api.forEachNode((rowNode: RowNode) => {
         const qortalAtAddress = rowNode.data?.qortalAtAddress;
