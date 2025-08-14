@@ -44,7 +44,8 @@ interface QortalRequestOptions {
   foreignAmount?: number;
   atAddress?: string;
   type?: string
-  value?: string | number
+  value?: string | number;
+  qortalLink?: string
 }
 
 declare function qortalRequest(options: QortalRequestOptions): Promise<any>;

@@ -41,9 +41,15 @@ import {
   AppBar,
   Avatar,
   Box,
+  Button,
   ButtonBase,
   Card,
   CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   FormControlLabel,
   MenuItem,
@@ -169,6 +175,7 @@ export const Header = ({
   const [openCoinActionModal, setOpenCoinActionModal] =
     useState<CoinModalProps | null>(null);
   const [receiverAddress, setReceiverAddress] = useState<string>("");
+  const [openPermissionOpenQwallets, setOpenPermissionOpenQwallets] = useState(false)
   const [senderAddress, setSenderAddress] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [coinAddresses, setCoinAddresses] = useState({});
@@ -468,10 +475,11 @@ export const Header = ({
                 <CoinActionsRow>
                   <CoinSendBtn
                     onClick={() => {
-                      setOpenCoinActionModal({
-                        coin: selectedCoin,
-                        type: "send",
-                      });
+                      setOpenPermissionOpenQwallets(true)
+                      // setOpenCoinActionModal({
+                      //   coin: selectedCoin,
+                      //   type: "send",
+                      // });
                     }}
                   >
                     Send
@@ -491,7 +499,30 @@ export const Header = ({
             </CardContent>
           </Card>
         </RightColumn>
+ <Dialog
+        open={openPermissionOpenQwallets}
 
+        keepMounted
+        onClose={()=> setOpenPermissionOpenQwallets(false)}
+        aria-describedby="alert-dialog-slide-description"
+      >
+        <DialogTitle>{`Send ${selectedCoin}`}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-slide-description">
+           To send {selectedCoin} please open and use Q-Wallets
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={()=> setOpenPermissionOpenQwallets(false)}>Close</Button>
+          <Button onClick={()=> {
+            qortalRequest({
+         action: "OPEN_NEW_TAB",
+  qortalLink: `qortal://APP/Q-Wallets/${selectedCoin.toLowerCase()}`,
+          })
+          setOpenPermissionOpenQwallets(false)
+          }}>Open Q-Wallets</Button>
+        </DialogActions>
+      </Dialog>
         <CoinSelectRow>
           <Select
             size="small"
