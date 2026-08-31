@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { baseLocalHost } from "../Grids/TradeOffers";
+import { parseWebSocketJson } from "../../utils/websocket";
 import {
   Alert,
   Box,
@@ -90,8 +91,12 @@ export default function UnsignedFees({ qortAddress }) {
       setTimeout(pingSocket, 50);
     };
     socketRef.current.onmessage = (e) => {
+      const data = parseWebSocketJson<{ address: string; positive: boolean }>(
+        e.data
+      );
+      if (!data) return;
+
       restarted = false;
-      const data = JSON.parse(e.data);
       if (qortAddressRef.current === data.address) {
         if (data.positive) {
           setIsPositive(true);
