@@ -46,6 +46,7 @@ interface QortalRequestOptions {
   type?: string
   value?: string | number;
   qortalLink?: string
+  processType?: "gateway" | "local";
 }
 
 declare function qortalRequest(options: QortalRequestOptions): Promise<any>;
