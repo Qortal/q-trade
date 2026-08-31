@@ -281,32 +281,6 @@ if(gridRef.current){
 const columnDefs: ColDef[] = useMemo(() => {
   const baseColumns: ColDef[] = [
     {
-      headerCheckboxSelection: true,
-      checkboxSelection: true,
-      headerName: "",
-      width: 100,
-      pinned: "left",
-      resizable: false,
-      tooltipValueGetter: rowTooltip,
-      cellRenderer: (params) => (
-        <SelectWithInfoCell
-          {...params}
-          selectTradeForDetails={() => {
-            const hasSignedFee = signedUnlockingFees?.find(
-              (item) =>
-                item?.atAddress === params?.node?.data?.qortalAtAddress
-            );
-            let fee = null;
-            if (hasSignedFee) {
-              fee = hasSignedFee.fee;
-            }
-
-            setOpenShowOfferDetails({ ...(params?.node?.data || {}), fee });
-          }}
-        />
-      ),
-    },
-    {
       headerName: "QORT AMOUNT",
       field: "qortAmount",
       flex: 1,
@@ -379,6 +353,26 @@ const columnDefs: ColDef[] = useMemo(() => {
 
   return baseColumns;
 }, [qortalNames, getCoinLabel, signedUnlockingFees, selectedCoinRef.current]);
+
+  const selectionColumnDef = {
+    width: 100,
+    maxWidth: 100,
+    pinned: "left" as const,
+    resizable: false,
+    tooltipValueGetter: rowTooltip,
+    cellRenderer: (params) => (
+      <SelectWithInfoCell
+        {...params}
+        selectTradeForDetails={() => {
+          const hasSignedFee = signedUnlockingFees?.find(
+            (item) => item?.atAddress === params?.node?.data?.qortalAtAddress
+          );
+          const fee = hasSignedFee?.fee ?? null;
+          setOpenShowOfferDetails({ ...(params?.node?.data || {}), fee });
+        }}
+      />
+    ),
+  };
 
 
   // const onRowClicked = (event: any) => {
@@ -1016,10 +1010,13 @@ const columnDefs: ColDef[] = useMemo(() => {
           onSelectionChanged={onSelectionChanged}
           getRowStyle={getRowStyle}
           autoSizeStrategy={autoSizeStrategy}
+          selectionColumnDef={selectionColumnDef}
           rowSelection={{
             mode: selectedCoin === "PIRATECHAIN" ? "singleRow" : "multiRow",
             enableClickSelection: true,
             enableSelectionWithoutKeys: true,
+            checkboxes: true,
+            headerCheckbox: selectedCoin !== "PIRATECHAIN",
             isRowSelectable: (params) => {
               if(selectedCoinRef.current === 'PIRATECHAIN') return true
               let selectable = true;

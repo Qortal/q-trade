@@ -165,7 +165,7 @@ export default function HistoryList({ qortAddress, historyList }) {
           // onSelectionChanged={onSelectionChanged}
           // getRowStyle={getRowStyle}
           autoSizeStrategy={autoSizeStrategy}
-          rowSelection="single" // Enable multi-select
+          rowSelection={{ mode: "singleRow", enableClickSelection: true }}
           suppressHorizontalScroll={false} // Allow horizontal scroll on mobile if needed
           suppressCellFocus={true} // Prevents cells from stealing focus in mobile
           // pagination={true}

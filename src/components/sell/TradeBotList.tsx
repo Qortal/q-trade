@@ -54,14 +54,6 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
   const columnDefs: ColDef[] = useMemo(() => {
     return [
       {
-        headerCheckboxSelection: false, // Adds a checkbox in the header for selecting all rows
-        checkboxSelection: true, // Adds checkboxes in each row for selection
-        headerName: "Select", // You can customize the header name
-        width: 50, // Adjust the width as needed
-        pinned: "left", // Optional, to pin this column on the left
-        resizable: false,
-      },
-      {
         headerName: "QORT AMOUNT",
         field: "qortAmount",
         flex: 1, // Flex makes this column responsive
@@ -339,7 +331,16 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
           onSelectionChanged={onSelectionChanged}
           // getRowStyle={getRowStyle}
           autoSizeStrategy={autoSizeStrategy}
-          rowSelection="single" // Enable multi-select
+          rowSelection={{
+            mode: "singleRow",
+            enableClickSelection: true,
+            checkboxes: true,
+          }}
+          selectionColumnDef={{
+            width: 50,
+            pinned: "left",
+            resizable: false,
+          }}
           suppressHorizontalScroll={false} // Allow horizontal scroll on mobile if needed
           suppressCellFocus={true} // Prevents cells from stealing focus in mobile
           // pagination={true}
