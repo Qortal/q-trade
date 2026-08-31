@@ -43,6 +43,10 @@ interface QortalRequestOptions {
   foreignBlockchain?: string;
   foreignAmount?: number;
   atAddress?: string;
+  type?: string
+  value?: string | number;
+  qortalLink?: string
+  processType?: "gateway" | "local";
 }
 
 declare function qortalRequest(options: QortalRequestOptions): Promise<any>;

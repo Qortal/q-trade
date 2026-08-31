@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ReactGA from "react-ga4";
 import "./App.css";
-import socketService from "./services/socketService";
 import GameContext, {
   IContextProps,
   UserNameAvatar,
@@ -22,9 +21,7 @@ import axios from "axios";
 import { executeEvent } from "./utils/events";
 import { useIndexedDBContext } from "./contexts/indexedDBContext";
 import { useGetOngoingTransactions } from "./components/DbComponents/OngoingTransactions";
-
-
-
+import { GlobalProvider } from "qapp-core";
 
 export async function sendRequestToExtension(
   requestType: string,
@@ -66,26 +63,32 @@ export async function sendRequestToExtension(
   });
 }
 
-
-
 function App() {
   const [userInfo, setUserInfo] = useState<any>(null);
   const [qortBalance, setQortBalance] = useState<any>(null);
   const [balances, setBalances] = useState<any>({});
   const [selectedCoin, setSelectedCoin] = useState("LITECOIN");
-
-  const foreignCoinBalance = useMemo(()=> {
-    if(balances[selectedCoin] === 0) return 0
-    return balances[selectedCoin] || null
-  }, [balances, selectedCoin])
+ 
+  const foreignCoinBalance = useMemo(() => {
+    if (balances[selectedCoin] === 0) return 0;
+    return balances[selectedCoin] || null;
+  }, [balances, selectedCoin]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [OAuthLoading, setOAuthLoading] = useState<boolean>(false);
   const db = useIndexedDBContext();
-  const [isUsingGateway, setIsUsingGateway] = useState(null)
+  const [isUsingGateway, setIsUsingGateway] = useState(null);
 
   const [isSocketUp, setIsSocketUp] = useState<boolean>(false);
   // const [onGoingTrades, setOngoingTrades] = useState([])
-  const {onGoingTrades, fetchOngoingTransactions, updateTransactionInDB, deleteTemporarySellOrder, updateTemporaryFailedTradeBots, fetchTemporarySellOrders, sellOrders} = useGetOngoingTransactions({qortAddress: userInfo?.address})
+  const {
+    onGoingTrades,
+    fetchOngoingTransactions,
+    updateTransactionInDB,
+    deleteTemporarySellOrder,
+    updateTemporaryFailedTradeBots,
+    fetchTemporarySellOrders,
+    sellOrders,
+  } = useGetOngoingTransactions({ qortAddress: userInfo?.address });
   const [userNameAvatar, setUserNameAvatar] = useState<
     Record<string, UserNameAvatar>
   >({});
@@ -101,27 +104,23 @@ function App() {
     setLoadingSlider,
   };
 
-  const getIsUsingGateway = async ()=> {
+  const getIsUsingGateway = async () => {
     try {
       const res = await qortalRequest({
-        action: "IS_USING_PUBLIC_NODE"
-      })
-      setIsUsingGateway(res)
-    } catch (error) {
-      
-    }
-  }
+        action: "IS_USING_PUBLIC_NODE",
+      });
+      setIsUsingGateway(res);
+    } catch (error) {}
+  };
 
-
-  useEffect(()=> {
-   getIsUsingGateway()
-  }, [])
+  useEffect(() => {
+    getIsUsingGateway();
+  }, []);
 
   const resetNotification = () => {
     setNotification({ alertType: "", msg: "" });
   };
 
-  
   const userContextValue: UserContextProps = {
     avatar,
     setAvatar,
@@ -164,53 +163,44 @@ function App() {
     askForAccountInformation();
   }, [askForAccountInformation]);
 
-
-
-
-  
-
- 
-
-
-  const getQortBalance = async ()=> {
+  const getQortBalance = async () => {
     const balanceUrl: string = `/addresses/balance/${userInfo?.address}`;
     const balanceResponse = await axios(balanceUrl);
-    setQortBalance(balanceResponse.data?.value)
-  }
+    setQortBalance(balanceResponse.data?.value);
+  };
 
   const getLTCBalance = async (coin) => {
     try {
       const response = await qortalRequest({
         action: "GET_WALLET_BALANCE",
-        coin: getCoinLabel(coin)
+        coin: getCoinLabel(coin),
       });
-      if(!response?.error){
-        setBalances((prev)=> {
+      if (!response?.error) {
+        setBalances((prev) => {
           return {
             ...prev,
-            [coin]: +response
-          }
-        })
+            [coin]: +response,
+          };
+        });
       }
     } catch (error) {
-   //
+      //
     }
-  }
+  };
 
   useEffect(() => {
-    if(!userInfo?.address || !selectedCoin) return
+    if (!userInfo?.address || !selectedCoin) return;
     const intervalGetTradeInfo = setInterval(() => {
-      fetchOngoingTransactions()
-      getLTCBalance(selectedCoin)
-      getQortBalance()
-    }, 150000)
-    getLTCBalance(selectedCoin)
-      getQortBalance()
+      fetchOngoingTransactions();
+      getLTCBalance(selectedCoin);
+      getQortBalance();
+    }, 150000);
+    getLTCBalance(selectedCoin);
+    getQortBalance();
     return () => {
-      clearInterval(intervalGetTradeInfo)
-    }
-  }, [userInfo?.address, isAuthenticated, selectedCoin])
-
+      clearInterval(intervalGetTradeInfo);
+    };
+  }, [userInfo?.address, isAuthenticated, selectedCoin]);
 
   const handleMessage = async (event: any) => {
     if (event.data.type === "LOGOUT") {
@@ -218,31 +208,29 @@ function App() {
       setUserInfo(null);
       setAvatar("");
       setIsAuthenticated(false);
-      setQortBalance(null)
+      setQortBalance(null);
       localStorage.setItem("token", "");
-    } else if(event.data.type === "RESPONSE_FOR_TRADES"){
-    
-
-      const response = event.data.payload
-      if (response?.extra?.atAddresses
-        ) {
+    } else if (event.data.type === "RESPONSE_FOR_TRADES") {
+      const response = event.data.payload;
+      if (response?.extra?.atAddresses) {
         try {
-          const status = response.callResponse === true ? 'trade-ongoing' : 'trade-failed'
+          const status =
+            response.callResponse === true ? "trade-ongoing" : "trade-failed";
           const token = localStorage.getItem("token");
-           // Prepare transaction data
-    const transactionData = {
-      qortalAtAddresses: response.extra.atAddresses,
-      qortAddress: userInfo.address,
-      status: status,
-      message: response.extra.message,
-    };
+          // Prepare transaction data
+          const transactionData = {
+            qortalAtAddresses: response.extra.atAddresses,
+            qortAddress: userInfo.address,
+            status: status,
+            message: response.extra.message,
+          };
 
-    // Update transactions in IndexedDB
-    const result = await updateTransactionInDB(transactionData);
-          fetchOngoingTransactions()
-          executeEvent("execute-get-new-block-trades", {})
+          // Update transactions in IndexedDB
+          const result = await updateTransactionInDB(transactionData);
+          fetchOngoingTransactions();
+          executeEvent("execute-get-new-block-trades", {});
         } catch (error) {
-          console.log({error})
+          console.log({ error });
         }
       }
     }
@@ -256,36 +244,33 @@ function App() {
     };
   }, [userInfo?.address]);
 
-  const getCoinLabel = useCallback((coin?: string)=>  {
-    switch(coin || selectedCoin){
-      case "LITECOIN":{
-
-        return 'LTC'
+  const getCoinLabel = useCallback(
+    (coin?: string) => {
+      switch (coin || selectedCoin) {
+        case "LITECOIN": {
+          return "LTC";
+        }
+        case "DOGECOIN": {
+          return "DOGE";
+        }
+        case "BITCOIN": {
+          return "BTC";
+        }
+        case "DIGIBYTE": {
+          return "DGB";
+        }
+        case "RAVENCOIN": {
+          return "RVN";
+        }
+        case "PIRATECHAIN": {
+          return "ARRR";
+        }
+        default:
+          return null;
       }
-      case "DOGECOIN":{
-
-        return 'DOGE'
-      }
-      case "BITCOIN":{
-
-        return 'BTC'
-      }
-      case "DIGIBYTE":{
-
-        return 'DGB'
-      }
-      case "RAVENCOIN":{
-
-        return 'RVN'
-      }
-      case "PIRATECHAIN":{
-
-        return 'ARRR'
-      }
-      default: 
-      return null
-    }
-  }, [selectedCoin])
+    },
+    [selectedCoin]
+  );
 
   const gameContextValue: IContextProps = {
     userInfo,
@@ -296,37 +281,54 @@ function App() {
     fetchOngoingTransactions,
     foreignCoinBalance,
     qortBalance,
-    isAuthenticated, 
+    isAuthenticated,
     setIsAuthenticated,
-    OAuthLoading, 
+    OAuthLoading,
     setOAuthLoading,
     updateTransactionInDB,
     sellOrders,
-    deleteTemporarySellOrder, updateTemporaryFailedTradeBots, fetchTemporarySellOrders, isUsingGateway, selectedCoin, setSelectedCoin, getCoinLabel
+    deleteTemporarySellOrder,
+    updateTemporaryFailedTradeBots,
+    fetchTemporarySellOrders,
+    isUsingGateway,
+    selectedCoin,
+    setSelectedCoin,
+    getCoinLabel,
   };
 
-  
   return (
-    <NotificationContext.Provider value={notificationContextValue}>
-      <LoadingContext.Provider value={loadingContextValue}>
-        <UserContext.Provider value={userContextValue}>
-          <GameContext.Provider value={gameContextValue}>
-            <Notification />
-            <ThemeProvider theme={darkTheme}>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <HomePage
-                    />
-                  }
-                />
-              </Routes>
-            </ThemeProvider>
-          </GameContext.Provider>
-        </UserContext.Provider>
-      </LoadingContext.Provider>
-    </NotificationContext.Provider>
+    <GlobalProvider
+      config={{
+        auth: {
+          balanceSetting: {
+            interval: 180000,
+            onlyOnMount: false,
+          },
+          authenticateOnMount: false,
+          userAccountInfo: {
+            address: userInfo?.address,
+            publicKey: userInfo?.publicKey,
+          },
+        },
+        appName: "q-trade",
+        publicSalt: "SwQR6+uWzwm9Cqw1vqpR8zPKIThqdc5X7CUhWKn+rfc=",
+      }}
+    >
+      <NotificationContext.Provider value={notificationContextValue}>
+        <LoadingContext.Provider value={loadingContextValue}>
+          <UserContext.Provider value={userContextValue}>
+            <GameContext.Provider value={gameContextValue}>
+              <Notification />
+              <ThemeProvider theme={darkTheme}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                </Routes>
+              </ThemeProvider>
+            </GameContext.Provider>
+          </UserContext.Provider>
+        </LoadingContext.Provider>
+      </NotificationContext.Provider>
+    </GlobalProvider>
   );
 }
 

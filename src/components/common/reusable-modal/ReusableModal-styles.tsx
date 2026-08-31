@@ -6,6 +6,7 @@ export const ReusableModalContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  flexDirection: 'column',
   backgroundColor: theme.palette.background.default,
   position: "fixed",
   top: "50%",
@@ -16,8 +17,10 @@ export const ReusableModalContainer = styled(Box)(({ theme }) => ({
   maxWidth: '90vw',
   height: "auto",
   borderRadius: "20px",
-  border: "20px solid #3F3F3F",
-  zIndex: "100",
+  border: "5px solid #3F3F3F",
+  zIndex: 9000,
+  maxHeight: '90vh',
+  overflow: 'auto',
   boxShadow:
     "0px 4px 5px 0px hsla(0,0%,0%,0.14), \n\t\t0px 1px 10px 0px hsla(0,0%,0%,0.12), \n\t\t0px 2px 4px -1px hsla(0,0%,0%,0.2)",
 }));
@@ -49,8 +52,8 @@ export const ReusableModalCloseIcon = styled(CloseIcon)(({ theme }) => ({
   cursor: "pointer",
   fontSize: "30px",
   position: "absolute",
-  top: "20px",
-  right: "20px",
+  top: "10px",
+  right: "10px",
   transition: "all 0.3s ease-in-out",
   "&:hover": {
     transform: "scale(1.1)",

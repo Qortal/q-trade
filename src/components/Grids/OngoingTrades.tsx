@@ -91,7 +91,7 @@ export const OngoingTrades = () => {
                 defaultColDef={defaultColDef}
                 rowData={filteredOngoingTrades}
                 // onRowClicked={onRowClicked}
-                rowSelection="single"
+                rowSelection={{ mode: "singleRow", enableClickSelection: true }}
                 getRowId={getRowId}
                 autoSizeStrategy={autoSizeStrategy}
                 suppressHorizontalScroll={false} // Allow horizontal scroll on mobile if needed

@@ -24,6 +24,8 @@ export const HomePage = () => {
   } = useContext(gameContext);
   const { setNotification } = useContext(NotificationContext);
   const [mode, setMode] = useState("buy");
+  const [fee, setFee] = useState("");
+
   const filteredOngoingTrades = useMemo(() => {
     return onGoingTrades?.filter(
       (item) => item?.tradeInfo?.foreignBlockchain === selectedCoin
@@ -50,13 +52,16 @@ export const HomePage = () => {
       <Header
         qortBalance={qortBalance}
         foreignCoinBalance={foreignCoinBalance}
+        qortAddress={userInfo?.address}
+        fee={fee}
+        setFee={setFee}
       />
 
       <AppContainer>
         <TabsContainer>
           <TabsRow>
             <Tab activeTab={mode === "buy"} onClick={() => setMode("buy")}>
-              Buy QORT
+              QORT for sale
             </Tab>
             {/* <TabDivider activeTab={mode === "buy" || mode === "sell"} /> */}
             <Tab activeTab={mode === "sell"} onClick={() => setMode("sell")}>
@@ -108,7 +113,8 @@ export const HomePage = () => {
             </TextTableTitle>
           </Box>
           <Spacer height="10px" />
-          <TradeOffers foreignCoinBalance={foreignCoinBalance} />
+          <TradeOffers setFee={setFee} fee={fee}
+         foreignCoinBalance={foreignCoinBalance} />
         </div>
 
         <CreateSell show={mode === "sell"} qortAddress={userInfo?.address} />

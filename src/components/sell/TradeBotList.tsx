@@ -1,7 +1,6 @@
 import { ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import React, {
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -9,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import { autoSizeStrategy, baseLocalHost } from "../Grids/TradeOffers";
+import { parseWebSocketJson } from "../../utils/websocket";
 import {
   Alert,
   Box,
@@ -51,24 +51,8 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
     return list;
   }, [failedTradeBots, tradeBotList]);
 
-  const onGridReady = useCallback((params: any) => {
-    params.api.sizeColumnsToFit(); // Adjust columns to fit the grid width
-    const allColumnIds = params.columnApi
-      .getAllColumns()
-      .map((col: any) => col.getColId());
-    params.columnApi.autoSizeColumns(allColumnIds); // Automatically adjust the width to fit content
-  }, []);
-
   const columnDefs: ColDef[] = useMemo(() => {
     return [
-      {
-        headerCheckboxSelection: false, // Adds a checkbox in the header for selecting all rows
-        checkboxSelection: true, // Adds checkboxes in each row for selection
-        headerName: "Select", // You can customize the header name
-        width: 50, // Adjust the width as needed
-        pinned: "left", // Optional, to pin this column on the left
-        resizable: false,
-      },
       {
         headerName: "QORT AMOUNT",
         field: "qortAmount",
@@ -167,7 +151,6 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
     setTradeBotList(sellTrades);
     tradeBotListRef.current = sellTrades;
   };
-
   const restartTradeOffers = () => {
     if (socketRef.current) {
       socketRef.current.close(1000, "forced"); // Close with a custom reason
@@ -193,9 +176,12 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
       tradeOffersSocketCounter += 1;
     };
     socketRef.current.onmessage = (e) => {
+      const tradeBots = parseWebSocketJson<any[]>(e.data);
+      if (!tradeBots) return;
+
       tradeOffersSocketCounter += 1;
       restarted = false;
-      processTradeBots(JSON.parse(e.data));
+      processTradeBots(tradeBots);
     };
     socketRef.current.onclose = (event) => {
       clearTimeout(socketTimeout);
@@ -345,12 +331,20 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
           onSelectionChanged={onSelectionChanged}
           // getRowStyle={getRowStyle}
           autoSizeStrategy={autoSizeStrategy}
-          rowSelection="single" // Enable multi-select
+          rowSelection={{
+            mode: "singleRow",
+            enableClickSelection: true,
+            checkboxes: true,
+          }}
+          selectionColumnDef={{
+            width: 50,
+            pinned: "left",
+            resizable: false,
+          }}
           suppressHorizontalScroll={false} // Allow horizontal scroll on mobile if needed
           suppressCellFocus={true} // Prevents cells from stealing focus in mobile
           // pagination={true}
           // paginationPageSize={10}
-          onGridReady={onGridReady}
           //  domLayout='autoHeight'
           // getRowId={(params) => params.data.qortalAtAddress} // Ensure rows have unique IDs
         />

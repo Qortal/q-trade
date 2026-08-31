@@ -24,7 +24,6 @@ export const BuyContainer = styled(Box)(({ theme }) => ({
   justifyContent: "space-between",
   alignItems: "center",
   bottom: "0px",
-  height: "100px",
   padding: "18px 14px 12px 14px",
   background: "#323336",
   zIndex: 3,
@@ -46,11 +45,12 @@ export const BuyContainerDivider = styled(Box)(({ theme }) => ({
   }
 }));
 
-export const BuyOrderBtn = styled("button")(({ theme }) => ({
+export const BuyOrderBtn = styled(Button)(({ theme }) => ({
   borderRadius: "8px",
-  width: "74px",
-  height: "30px",
-  background: "#4D7345",
+  width: "80px",
+  height: "45px",
+  background: "#2e7d32",
+  fontSize: '18px',
   color: "white",
   cursor: "pointer",
   border: "1px solid #375232",
