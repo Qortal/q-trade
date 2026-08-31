@@ -9,6 +9,7 @@ import React, {
   useState,
 } from "react";
 import { autoSizeStrategy, baseLocalHost } from "../Grids/TradeOffers";
+import { parseWebSocketJson } from "../../utils/websocket";
 import {
   Alert,
   Box,
@@ -193,9 +194,12 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
       tradeOffersSocketCounter += 1;
     };
     socketRef.current.onmessage = (e) => {
+      const tradeBots = parseWebSocketJson<any[]>(e.data);
+      if (!tradeBots) return;
+
       tradeOffersSocketCounter += 1;
       restarted = false;
-      processTradeBots(JSON.parse(e.data));
+      processTradeBots(tradeBots);
     };
     socketRef.current.onclose = (event) => {
       clearTimeout(socketTimeout);

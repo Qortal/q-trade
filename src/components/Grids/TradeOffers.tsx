@@ -34,6 +34,7 @@ import {
 } from "@mui/material";
 import gameContext from "../../contexts/gameContext";
 import { subscribeToEvent, unsubscribeFromEvent } from "../../utils/events";
+import { parseWebSocketJson } from "../../utils/websocket";
 import { useModal } from "../common/useModal";
 import FileSaver from "file-saver";
 import { Spacer } from "../common/Spacer";
@@ -398,9 +399,12 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
       setTimeout(pingSocket, 50);
     };
     socketPresenceRef.current.onmessage = (e) => {
+      const presenceUpdates = parseWebSocketJson<any[]>(e.data);
+      if (!presenceUpdates) return;
+
       tradePresenceTxns.current = !initiatedFetchPresenceSocket.current
-        ? JSON.parse(e.data)
-        : [...tradePresenceTxns.current, ...JSON.parse(e.data)];
+        ? presenceUpdates
+        : [...tradePresenceTxns.current, ...presenceUpdates];
       initiatedFetchPresenceSocket.current = true;
       processOffersWithPresence();
       restarted = false;
@@ -439,11 +443,14 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
       setTimeout(pingSocket, 50);
     };
     socketRef.current.onmessage = (e) => {
+      const tradeUpdates = parseWebSocketJson<any[]>(e.data);
+      if (!tradeUpdates) return;
+
       offeringTrades.current = [
         ...offeringTrades.current?.filter(
           (coin) => coin?.foreignBlockchain === selectedCoin
         ),
-        ...JSON.parse(e.data)?.filter(
+        ...tradeUpdates.filter(
           (coin) => coin?.foreignBlockchain === selectedCoin
         ),
       ];
@@ -535,6 +542,7 @@ export const TradeOffers: React.FC<any> = ({ foreignCoinBalance }: any) => {
           action: "CREATE_TRADE_BUY_ORDER",
           crosschainAtInfo: listOfATs,
           foreignBlockchain: selectedCoin,
+          processType: isUsingGateway ? "gateway" : "local",
         },
         900000
       );
