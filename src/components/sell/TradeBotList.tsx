@@ -1,7 +1,6 @@
 import { ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import React, {
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -51,14 +50,6 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
     );
     return list;
   }, [failedTradeBots, tradeBotList]);
-
-  const onGridReady = useCallback((params: any) => {
-    params.api.sizeColumnsToFit(); // Adjust columns to fit the grid width
-    const allColumnIds = params.columnApi
-      .getAllColumns()
-      .map((col: any) => col.getColId());
-    params.columnApi.autoSizeColumns(allColumnIds); // Automatically adjust the width to fit content
-  }, []);
 
   const columnDefs: ColDef[] = useMemo(() => {
     return [
@@ -353,7 +344,6 @@ export default function TradeBotList({ qortAddress, failedTradeBots }) {
           suppressCellFocus={true} // Prevents cells from stealing focus in mobile
           // pagination={true}
           // paginationPageSize={10}
-          onGridReady={onGridReady}
           //  domLayout='autoHeight'
           // getRowId={(params) => params.data.qortalAtAddress} // Ensure rows have unique IDs
         />

@@ -287,8 +287,6 @@ const columnDefs: ColDef[] = useMemo(() => {
       width: 100,
       pinned: "left",
       resizable: false,
-      // @ts-ignore
-      suppressRowClickSelection: true,
       tooltipValueGetter: rowTooltip,
       cellRenderer: (params) => (
         <SelectWithInfoCell
@@ -948,17 +946,6 @@ const columnDefs: ColDef[] = useMemo(() => {
     return total;
   }, [selectedOffers]);
 
-  const onGridReady = useCallback((params: any) => {
-    params.api.sizeColumnsToFit(); // Adjust columns to fit the grid width
-    const allColumnIds = params?.columnApi
-      ?.getAllColumns()
-      ?.map((col: any) => col?.getColId());
-      if(allColumnIds){
-    params.columnApi.autoSizeColumns(allColumnIds); // Automatically adjust the width to fit content
-
-      }
-  }, []);
-
   const handleClose = (
     event?: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason
@@ -1029,17 +1016,10 @@ const columnDefs: ColDef[] = useMemo(() => {
           onSelectionChanged={onSelectionChanged}
           getRowStyle={getRowStyle}
           autoSizeStrategy={autoSizeStrategy}
-          rowSelection={selectedCoin === "PIRATECHAIN" ? "single" : "multiple"} // Enable multi-select
-          rowMultiSelectWithClick={true}
-          suppressHorizontalScroll={false} // Allow horizontal scroll on mobile if needed
-          suppressCellFocus={true} // Prevents cells from stealing focus in mobile
-          // pagination={true}
-          // paginationPageSize={10}
-          onGridReady={onGridReady}
-          //  domLayout='autoHeight'
-          getRowId={(params) => params.data.qortalAtAddress} // Ensure rows have unique IDs
-          enableBrowserTooltips={true}
-          gridOptions={{
+          rowSelection={{
+            mode: selectedCoin === "PIRATECHAIN" ? "singleRow" : "multiRow",
+            enableClickSelection: true,
+            enableSelectionWithoutKeys: true,
             isRowSelectable: (params) => {
               if(selectedCoinRef.current === 'PIRATECHAIN') return true
               let selectable = true;
@@ -1053,6 +1033,13 @@ const columnDefs: ColDef[] = useMemo(() => {
               return selectable;
             },
           }}
+          suppressHorizontalScroll={false} // Allow horizontal scroll on mobile if needed
+          suppressCellFocus={true} // Prevents cells from stealing focus in mobile
+          // pagination={true}
+          // paginationPageSize={10}
+          //  domLayout='autoHeight'
+          getRowId={(params) => params.data.qortalAtAddress} // Ensure rows have unique IDs
+          enableBrowserTooltips={true}
         />
       </Box>
         
